@@ -1,0 +1,3 @@
+// test api using HTTPCLIENT by .http file
+GET http://localhost:6666
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSm9obiBEb2UiLCJpYXQiOjE3MDY5MDE5MjMsImV4cCI6MTcwNjkwNTUyM30.belcJqPyUrzp0u7eBCSPC1Evn8vKzlAGJPXzxkil4U8
