@@ -1,0 +1,65 @@
+# Node.js
+node_modules/
+npm-debug.log
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Dependency directories
+lib-cov
+coverage
+.nyc_output
+.london
+.tmp
+
+# dotenv environment variables file
+.env
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+
+# Cache and Logs
+.cache/
+*.log*
+
+# Testing
+*.swp
+*.swo
+*.swa
+
+# Visual Studio Code
+.vscode/
+
+# Yarn
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
+
+# Docker
+.dockerignore
+.dockerenv
+.dockerignore
+
+# local env files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Serverless
+.serverless/
