@@ -13,3 +13,9 @@ app.listen(SERVER_PORT, () => {
   connectMongo();
   console.log("Server running on port " + SERVER_PORT);
 }); 
+app.post('login', (req, res) => {
+  console.log(req.body);  
+});
+app.get('', (req, res) => {
+  res.send('Hello World');
+})

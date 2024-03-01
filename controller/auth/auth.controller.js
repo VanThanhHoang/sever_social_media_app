@@ -29,21 +29,6 @@ const verifyGoogleIdToken = async (req, res) => {
     console.log("GOOGLE ID TOKEN NOT VALID",err);
   }
 };
-// this is schema of user model
-// const userSchema = new Schema(
-//   {
-//     userName: String,
-//     fullName: String,
-//     avatar: String,
-//     dob: Date,
-//     googleId: String,
-//     role: { type: Number, enum: [0, 1] },
-//     following_status: { type: Number, enum: [0, 1, 2] },
-//     account_type: { type: Number, enum: [0, 1] },
-//     fcm_token: String,
-//   },
-//   { timestamps: true }
-// );
 const registerAccountByGoogleInfo = async (userInfo) => {
   if(!userInfo){
     return null;
