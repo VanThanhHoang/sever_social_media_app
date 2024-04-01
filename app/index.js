@@ -4,10 +4,20 @@ import { connectMongo } from "../helper/db_connect.js";
 import cors from "cors";
 import { corsOptions } from "./config_app.js";
 import authRouter from "../routes/auth/auth.router.js";
+import uploadRouter from "../routes/upload/upload_router.js";
+import adminRouter from "../routes/admin/admin.router.js";
+import userRouter from "../routes/user/user.router.js";
+import postRouter from "../routes/post/post.router.js";
 const { SERVER_PORT } = configDotenv();
 const app = express();
 app.use(express.json());
 app.use('/auth',authRouter)
+app.use('/upload', uploadRouter);
+app.use('/admin',adminRouter)
+app.use('/user',userRouter)
+app.use('/post',postRouter)
+app.use(cors());
+app.use(cors(corsOptions));
 app.use(cors(corsOptions));
 app.listen(SERVER_PORT, () => {
   connectMongo();

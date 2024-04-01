@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { authController } from "../../controller/auth/auth.controller.js";
+import { UserController } from "../../controller/user/user.controller.js";
+import { jwtVerifyMiddleware } from "../../middleware/jwt_middleware.js";
 const userRouter = Router();
-authRouter.post("/register",authController.verifyGoogleIdToken);
-export default authRouter;
+userRouter.patch("/update_info",jwtVerifyMiddleware,UserController.updateInfo)
+export default userRouter;

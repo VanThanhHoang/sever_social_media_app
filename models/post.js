@@ -3,9 +3,9 @@ const { Schema } = mongoose;
 const postSchema = new Schema(
   {
     body: String,
-    user_id: { type: Schema.Types.ObjectId, ref: "User" },
-    status: { type: Number, enum: [0, 1] },
-    privacy: { type: Number, enum: [0, 1] },
+    author: { type: Schema.Types.ObjectId, ref: "User" },
+    status: { type: Number, enum: [0, 1], default: 0 }, // 0: active, 1: deactive
+    privacy: { type: Number, enum: [0, 1] }, // 0: public, 1: private // if private then only friends can see
   },
   { timestamps: true }
 );
@@ -13,7 +13,7 @@ const postSchema = new Schema(
 const postMediaSchema = new Schema({
   link: String,
   post_id: { type: Schema.Types.ObjectId, ref: "Post" },
-  orientation: { type: Number, enum: [0, 1] },
+  orientation: { type: Number, enum: [0, 1] },    // 0: portrait, 1: landscape
   width: Number,
   height: Number,
 });
@@ -31,6 +31,9 @@ const commentSchema = new Schema({
   status: { type: Number, enum: [0, 1] },
 });
 export const PostModel = mongoose.model("VNPIC.Post", postSchema);
-export const PostMediaModel = mongoose.model("VNPIC.PostMedia", postMediaSchema);
+export const PostMediaModel = mongoose.model(
+  "VNPIC.PostMedia",
+  postMediaSchema
+);
 export const ReactionModel = mongoose.model("VNPIC.Reaction", reactionSchema);
 export const CommentModel = mongoose.model("VNPIC.Comment", commentSchema);

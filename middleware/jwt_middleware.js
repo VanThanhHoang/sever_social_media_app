@@ -1,20 +1,22 @@
 // middleware to verify the token
 import jwt from "jsonwebtoken";
 import { STATUS_CODE } from "../helper/constant.js";
-const { JWT_SECRET } = process.env;
+
 // this function is to verify the token
 const jwtVerifyMiddleware = (req, res, next) => {
-  const token = req.headers.authorization;
-  if (!token) {
+  if(!req.headers.authorization) return res.status(STATUS_CODE.BAD_REQUEST).json({message: "Token is required"});
+  const accessToken = req.headers.authorization.split(' ')[1]
+  if (!accessToken) {
     return res
       .status(STATUS_CODE.BAD_REQUEST)
       .json({ message: "Token is required" });
   }
   try {
-    const userDataDecoded = jwt.verify(token, JWT_SECRET);
+    const userDataDecoded = jwt.verify(accessToken, process.env.JWT_SECRET);
     req.user = userDataDecoded;
     next();
   } catch (error) {
+    console.log(error.message);
     return res
       .status(STATUS_CODE.UNAUTHORIZED)
       .json({ message: "Invalid token" });

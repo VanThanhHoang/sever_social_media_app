@@ -2,12 +2,21 @@
 import { configDotenv } from "dotenv";
 import jwt from "jsonwebtoken";
 configDotenv();
-const { EXPIRE_JWT_TIME } = process.env;
 
-const makeJwt = (data) => {
+const makeToken = (data, isRefreshToken) => {
+  if (isRefreshToken) {
+    return jwt.sign(data, process.env.JWT_SECRET_REFRESH, {
+      expiresIn: process.env.EXPIRE_JWT_REFRESH_TIME,
+    });
+  }
   return jwt.sign(data, process.env.JWT_SECRET, {
-    expiresIn: EXPIRE_JWT_TIME,
+    expiresIn: process.env.EXPIRE_JWT_TIME,
   });
 };
-
-export { makeJwt };
+const verifyToken = (token, isRefreshToken) => {
+  if (isRefreshToken) {
+    return jwt.verify(token, process.env.JWT_SECRET_REFRESH);
+  }
+  return jwt.verify(token, process.env.JWT_SECRET);
+};
+export { makeToken, verifyToken };
