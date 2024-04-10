@@ -2,6 +2,8 @@ import mongoose from "mongoose";
 const { Schema } = mongoose;
 const postSchema = new Schema(
   {
+    isRepost: { type: Boolean, default: false },
+    reposter: { type: Schema.Types.ObjectId, ref: "User" },
     body: String,
     author: { type: Schema.Types.ObjectId, ref: "User" },
     status: { type: Number, enum: [0, 1], default: 0 }, // 0: active, 1: deactive

@@ -9,4 +9,5 @@ postRouter.patch("/update_post/:id",jwtVerifyMiddleware,postController.upDatePos
 postRouter.get("/get_post/:id",jwtVerifyMiddleware,postController.getDetailPost);
 postRouter.delete("/delete_post/:id",jwtVerifyMiddleware,postController.deletePost);
 postRouter.put("/reaction/:id",jwtVerifyMiddleware,postController.postReaction);
+postRouter.post("/repost/:id",jwtVerifyMiddleware,postController.repost);
 export default postRouter;

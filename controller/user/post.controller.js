@@ -4,6 +4,7 @@ import {
   ReactionModel,
   CommentModel,
 } from "../../models/post.js";
+import { UserModel } from "../../models/user.js";
 const uploadPost = async (req, res) => {
   const { id } = req.user;
   const { body, privacy, media } = req.body;
@@ -14,7 +15,7 @@ const uploadPost = async (req, res) => {
   });
   await post.save();
   const mediaSaved = await uploadMedia(media, post._id, res);
-  res.status(200).json({ message: "upload post success" });
+  res.status(200).json({ message: "upload post success", data: { ...post._doc, media: mediaSaved }});
 };
 const uploadMedia = async (media, postId, res) => {
   let mediaSaved = [];
@@ -44,7 +45,7 @@ const upDatePost = async (req, res) => {
       path: "author",
       select: "userName fullName avatar",
       model: "VNPIC.User",
-    });
+    })
     if (mediaDelete) {
       for (const item of mediaDelete) {
         await PostMediaModel.findByIdAndDelete(item);
@@ -67,6 +68,7 @@ const upDatePost = async (req, res) => {
 const getAllPost = async (req, res) => {
   try {
     const { id } = req.user;
+    console.log(id);
     const page = parseInt(req.query.page) || 1;
     const pageSize = 10; // Số lượng bài viết trên mỗi trang
 
@@ -75,17 +77,20 @@ const getAllPost = async (req, res) => {
     // Lấy số lượng bài viết dựa trên skip và pageSize
     let posts = await PostModel.find(
       { status: 0 },
-      "title content author create_at"
     )
       .populate({
         path: "author",
         select: "userName fullName avatar",
         model: "VNPIC.User",
+      }).
+      populate({
+        path:"reposter",
+        select: "userName fullName avatar",
+        model: "VNPIC.User",
       })
-      .sort({ create_at: -1 })
       .skip(skip)
       .limit(pageSize)
-      .lean();
+      .lean().sort({ createdAt: -1 });
 
     // Đếm tổng số bài viết
     const totalPosts = await PostModel.countDocuments({ status: 0 });
@@ -97,19 +102,25 @@ const getAllPost = async (req, res) => {
     const postIds = posts.map((post) => post._id);
     // Lấy các phương tiện của bài viết
     const postMedia = await PostMediaModel.find({ post_id: { $in: postIds } });
-    const reactions = await ReactionModel.find({ post_id: { $in: postIds } }).populate({
+    const reactions = await ReactionModel.find({
+      post_id: { $in: postIds },
+    }).populate({
       path: "user_id",
       select: "userName fullName avatar",
       model: "VNPIC.User",
-    })
+    });
     // Thêm phương tiện và các trường khác vào mỗi bài viết
-    posts.forEach( async(post) => {
+    posts.forEach(async (post) => {
       post.media = postMedia.filter((media) => media.post_id.equals(post._id));
       post.comments = [];
-      const userReaction = reactions.filter((reaction) => reaction.post_id.equals(post._id));
+      const userReaction = reactions.filter((reaction) =>
+        reaction.post_id.equals(post._id)
+      );
       post.reactions = userReaction.map((reaction) => reaction.user_id);
       post.isMine = post.author._id.equals(id);
-      post.isLiked = userReaction.some((reaction) => reaction.user_id._id.equals(id));
+      post.isLiked = userReaction.some((reaction) =>
+        reaction.user_id._id.equals(id)
+      );
     });
 
     // Tạo object chứa dữ liệu cần trả về
@@ -170,23 +181,45 @@ const deletePost = async (req, res) => {
   }
 };
 const postReaction = async (req, res) => {
+ try{
   const { id } = req.params;
   const { id: user_id } = req.user;
   // Kiểm tra xem người dùng đã có phản ứng trên bài đăng này chưa
-  const existingReaction = await ReactionModel.findOne({ post_id: id, user_id });
+  const existingReaction = await ReactionModel.findOne({
+    post_id: id,
+    user_id,
+  });
   if (existingReaction) {
     // Nếu đã có phản ứng từ người dùng trước đó, xoá nó
     await ReactionModel.findByIdAndDelete(existingReaction._id);
-    res.status(200).json({ message: "post reaction removed"});
+    res.status(200).json({ message: "post reaction removed" });
   } else {
     // Nếu chưa có phản ứng từ người dùng, thêm mới phản ứng
     const reaction = new ReactionModel({
       post_id: id,
-      user_id
+      user_id,
     });
     await reaction.save();
-    res.status(200).json({ message: "post reaction success"});
+    res.status(200).json({ message: "post reaction success" });
   }
+ }catch(err){
+    console.log(err);
+    res.status(400).json({ message: "post reaction failed, bad request" });
+ }
+};
+const repost = async (req, res) => {
+  const { id } = req.params;
+  const { id: user_id } = req.user;
+  const post = await PostModel.findById(id);
+  const repost = new PostModel({
+    isRepost: true,
+    reposter: user_id,
+    body: post.body,
+    author: post.author,
+    privacy: post.privacy,
+  });
+  await repost.save();
+  res.status(200).json({ message: "repost success", data: repost });
 };
 
 export const postController = {
@@ -197,4 +230,5 @@ export const postController = {
   getDetailPost,
   deletePost,
   postReaction,
+  repost,
 };
