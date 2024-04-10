@@ -1,8 +1,9 @@
 import { configDotenv } from "../../helper/config_helper.js";
 import { OAuth2Client } from "google-auth-library";
-const { WEB_CLIENT_ID } = configDotenv();
 import { UserModel } from "../../models/user.js";
 import { makeToken } from "../../helper/jwt_helper.js";
+import dotenv from "dotenv";
+dotenv.config();
 const verifyGoogleIdToken = async (req, res) => {
   const { idToken, fcm_token } = req.body;
   try {
@@ -10,21 +11,30 @@ const verifyGoogleIdToken = async (req, res) => {
     const response = ticket.getPayload();
     if (
       response.iss !== "accounts.google.com" &&
-      response.aud !== WEB_CLIENT_ID
+      response.aud !== process.env.WEB_CLIENT_ID
     ) {
       return res.status(401).json({ status: "error", error: "Bad Request" });
     }
     const userGoogleInfo = getUserInfoByGoogleInfo(response);
     const userExisted = await isUserExisted(userGoogleInfo.googleId);
     if (userExisted) {
-      const accessToken = makeToken({ id:userExisted._id, email: userGoogleInfo.email});
-      const refreshToken = makeToken({ id:userExisted._id, email: userGoogleInfo.email }, true);
+      const accessToken = makeToken({
+        id: userExisted._id,
+        email: userGoogleInfo.email,
+      });
+      const refreshToken = makeToken(
+        { id: userExisted._id, email: userGoogleInfo.email },
+        true
+      );
       userExisted.fcm_token = fcm_token;
-      res.status(200).json({ status: "success", data:{
-        ...userExisted._doc,
-        accessToken,
-        refreshToken,
-      }});
+      res.status(200).json({
+        status: "success",
+        data: {
+          ...userExisted._doc,
+          accessToken,
+          refreshToken,
+        },
+      });
     } else {
       const newUser = new UserModel({
         googleId: userGoogleInfo.googleId,
@@ -38,13 +48,22 @@ const verifyGoogleIdToken = async (req, res) => {
         fcm_token: fcm_token ?? "",
       });
       await newUser.save();
-      const accessToken = makeToken({ id:newUser._id, email: userGoogleInfo.email});
-      const refreshToken = makeToken({ id:newUser._id, email: userGoogleInfo.email }, true);
-      res.status(200).json({ status: "success", data: {
-        ...newUser._doc,
-        accessToken,
-        refreshToken,
-      } });
+      const accessToken = makeToken({
+        id: newUser._id,
+        email: userGoogleInfo.email,
+      });
+      const refreshToken = makeToken(
+        { id: newUser._id, email: userGoogleInfo.email },
+        true
+      );
+      res.status(200).json({
+        status: "success",
+        data: {
+          ...newUser._doc,
+          accessToken,
+          refreshToken,
+        },
+      });
     }
   } catch (err) {
     console.log(err);
@@ -68,10 +87,10 @@ const getUserInfoByGoogleInfo = (response) => {
   };
 };
 const getGoogleTicket = async (idToken) => {
-  const client = new OAuth2Client(WEB_CLIENT_ID);
+  const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
   return await client.verifyIdToken({
     idToken,
-    audience: WEB_CLIENT_ID,
+    requiredAudience: process.env.GOOGLE_CLIENT_ID,
   });
 };
 export const authController = {
