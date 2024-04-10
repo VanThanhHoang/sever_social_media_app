@@ -10,4 +10,5 @@ postRouter.get("/get_post/:id",jwtVerifyMiddleware,postController.getDetailPost)
 postRouter.delete("/delete_post/:id",jwtVerifyMiddleware,postController.deletePost);
 postRouter.put("/reaction/:id",jwtVerifyMiddleware,postController.postReaction);
 postRouter.post("/repost/:id",jwtVerifyMiddleware,postController.repost);
+postRouter.get("/get_post_public/:id",postController.getDetailPost);
 export default postRouter;

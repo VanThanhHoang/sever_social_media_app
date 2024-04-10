@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <p id="p">Post ID: <%= id %></p>
+  </body>
+  <script>
+    const base_url = "http://localhost:8081";
+    // get detail post by id /post/get_post/66161a5664eab34dcc9dc87e
+    const id = "<%= id %>";
+    fetch(`${base_url}/post/get_post_public/${id}`)
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data);
+        document.getElementById("p").innerText = JSON.stringify(data.data);
+      });
+  </script>
+</html>

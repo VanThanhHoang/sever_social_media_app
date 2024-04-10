@@ -2,12 +2,16 @@ import express from "express";
 import { configDotenv } from "../helper/config_helper.js";
 import { connectMongo } from "../helper/db_connect.js";
 import cors from "cors";
-import { corsOptions } from "./config_app.js";
 import authRouter from "../routes/auth/auth.router.js";
 import uploadRouter from "../routes/upload/upload_router.js";
 import adminRouter from "../routes/admin/admin.router.js";
 import userRouter from "../routes/user/user.router.js";
 import postRouter from "../routes/post/post.router.js";
+import webRouter from "../routes/web/web.router.js";
+import path from "path";
+import {fileURLToPath} from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const { SERVER_PORT } = configDotenv();
 const app = express();
 app.use(express.json());
@@ -16,9 +20,16 @@ app.use('/upload', uploadRouter);
 app.use('/admin',adminRouter)
 app.use('/user',userRouter)
 app.use('/post',postRouter)
+app.use('/web',webRouter) 
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, '../public'));
 app.use(cors());
-app.use(cors(corsOptions));
-app.use(cors(corsOptions));
+app.use(cors({
+  origin: '*',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: false,
+  optionsSuccessStatus: 204,
+}));
 app.listen(SERVER_PORT, () => {
   connectMongo();
   console.log("Server running on port " + SERVER_PORT);
