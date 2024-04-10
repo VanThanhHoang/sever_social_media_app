@@ -5,6 +5,8 @@ const postRouter= Router();
 postRouter.post("/upload_post",jwtVerifyMiddleware,postController.uploadPost);
 postRouter.get("/new_feed",jwtVerifyMiddleware,postController.getAllPost);
 postRouter.delete("/delete_all",jwtVerifyMiddleware,postController.deleteAllPost);
-
-
+postRouter.patch("/update_post/:id",jwtVerifyMiddleware,postController.upDatePost);
+postRouter.get("/get_post/:id",jwtVerifyMiddleware,postController.getDetailPost);
+postRouter.delete("/delete_post/:id",jwtVerifyMiddleware,postController.deletePost);
+postRouter.put("/reaction/:id",jwtVerifyMiddleware,postController.postReaction);
 export default postRouter;
