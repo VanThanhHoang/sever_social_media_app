@@ -13,7 +13,7 @@ const verifyGoogleIdToken = async (req, res) => {
       response.iss !== "accounts.google.com" &&
       response.aud !== process.env.WEB_CLIENT_ID
     ) {
-      return res.status(401).json({ status: "error", error: "Bad Request" });
+      return res.status(401).json({ status: "error", error: "Server error" });
     }
     const userGoogleInfo = getUserInfoByGoogleInfo(response);
     const userExisted = await isUserExisted(userGoogleInfo.googleId);
@@ -27,12 +27,14 @@ const verifyGoogleIdToken = async (req, res) => {
         true
       );
       userExisted.fcm_token = fcm_token;
+      console.log(userExisted);
       res.status(200).json({
         status: "success",
         data: {
           ...userExisted._doc,
           accessToken,
           refreshToken,
+          isFirstTimeLogin: false,
         },
       });
     } else {
@@ -46,6 +48,7 @@ const verifyGoogleIdToken = async (req, res) => {
         following_status: 0,
         account_type: 1,
         fcm_token: fcm_token ?? "",
+
       });
       await newUser.save();
       const accessToken = makeToken({
@@ -62,6 +65,7 @@ const verifyGoogleIdToken = async (req, res) => {
           ...newUser._doc,
           accessToken,
           refreshToken,
+          isFirstTimeLogin: true,
         },
       });
     }

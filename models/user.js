@@ -15,6 +15,9 @@ const userSchema = new Schema(
     dob: Date, // can update
     gender: { type: Number, enum: [0, 1, 2] }, // can update
     googleId: String, 
+    bio: String, // can update,
+    // link array of string
+    links: [{ type: String }],
     role: { type: Number, enum: [0, 1] },
     following_status: { type: Number, enum: [0, 1, 2] },
     account_type: { type: Number, enum: [0, 1],default:1},// can update
