@@ -9,6 +9,7 @@ import mongoose from "mongoose";
 const { Schema } = mongoose;
 const userSchema = new Schema(
   {
+    password: String,
     userName: String, // can update not duplicate
     fullName: String,// can update
     avatar: String, // can update

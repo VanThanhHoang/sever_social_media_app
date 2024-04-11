@@ -63,8 +63,9 @@ uploadRouter.post("/", upload.single("filename"), async (req, res) => {
           resizedDimensions.height
         ),
       },
-    });
+    }); 
   } catch (error) {
+    console.log("Error uploading file: ", error);
     return res.status(400).json({ status: 400, message: error.message });
   }
 });
