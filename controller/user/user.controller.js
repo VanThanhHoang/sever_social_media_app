@@ -1,8 +1,11 @@
-import { UserModel } from "../../models/user.js";
+import { json } from "body-parser";
+import { UserModel,SearchHistoryModel } from "../../models/user.js";
+
 const updateInfo = async (req, res) => {
   try {
     const { user } = req;
-    const { userName, fullName, dob, gender, account_type,links,bio } = req.body;
+    const { userName, fullName, dob, gender, account_type, links, bio } =
+      req.body;
     const userExisted = await UserModel.findOne({ _id: user.id });
     if (fullName) userExisted.fullName = fullName;
     if (userName) {
@@ -32,22 +35,58 @@ const getDetailUser = async (req, res) => {
     console.log(error.message);
     res.status(400).json({ message: "error" });
   }
-}
+};
 // find by full name or userName
 const searchUser = async (req, res) => {
- try{
+  try {
     const { q } = req.query;
-    const users = await UserModel.find({$or:[{fullName:{$regex:q}},{userName:{$regex:q}}]});
-    res.status(200).json({message:"success",data:users});
- }catch(error){
-   console.log(error.message);
-   res.status(400).json({message:"error",data:[]});
- }
-}
-const checkUserNameExisted = async (req,res) => {
+    const users = await UserModel.find({
+      $or: [{ fullName: { $regex: q } }, { userName: { $regex: q } }],
+    });
+    new SearchHistoryModel({
+      user: req.user.id,
+      search: q,
+    }).save();
+    res.status(200).json({ message: "success", data: json });
+  } catch (error) {
+    console.log(error.message);
+    res.status(400).json({ message: "error", data: [] });
+  }
+};
+const checkUserNameExisted = async (req, res) => {
   const { userName } = req.params;
   const isUserNameExisted = await UserModel.findOne({ userName });
-  if(isUserNameExisted) return res.status(400).json({ message: "userName is existed" });
-  else return res.status(200).json({ message: "userName is not existed" });
-  }
-export const UserController = { updateInfo, getDetailUser,searchUser,checkUserNameExisted};
+  if (isUserNameExisted)
+    return res.status(400).json({ message: "userName is existed" });
+    else return res.status(200).json({ message: "userName is not existed" });
+};
+const getSearchHistory = async (req, res) => {
+  const { id } = req.user;
+  const searchHistory = await SearchHistoryModel.find({ user: id }).sort({createdAt:-1});
+  res.status(200).json({ message: "success", data: searchHistory });
+};
+const deleteSearchHistory = async (req, res) => {
+ try{
+  const { id } = req.params;
+  const searchHistory = await SearchHistoryModel.findOneAndDelete({ _id: id });
+  if (!searchHistory) return res.status(400).json({ message: "not found" });
+  res.status(200).json({ message: "delete success" });
+ }catch(error){
+  console.log(error.message);
+  res.status(400).json({ message: "error" });
+ }
+}
+const clearSearchHistory = async (req, res) => {
+  const { id } = req.user;
+  const searchHistory = await SearchHistoryModel.deleteMany({ user: id });
+  res.status(200).json({ message: "delete success", data: searchHistory });
+}
+export const UserController = {
+  updateInfo,
+  getDetailUser,
+  searchUser,
+  checkUserNameExisted,
+  getSearchHistory,
+  deleteSearchHistory,
+  clearSearchHistory
+};

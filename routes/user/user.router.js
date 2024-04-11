@@ -7,5 +7,7 @@ userRouter.get("/:id",jwtVerifyMiddleware,UserController.getDetailUser)
 userRouter.put("/follow/:id",jwtVerifyMiddleware,UserController.getDetailUser)
 userRouter.get("/s/search",jwtVerifyMiddleware,UserController.searchUser)
 userRouter.get("/check/:userName",jwtVerifyMiddleware,UserController.checkUserNameExisted)
-
+userRouter.get("/s/search/history",jwtVerifyMiddleware,UserController.getSearchHistory)
+userRouter.delete("/deleteSearchHistory/:id",jwtVerifyMiddleware,UserController.deleteSearchHistory)
+userRouter.delete("/clearSearchHistory",jwtVerifyMiddleware,UserController.clearSearchHistory)  
 export default userRouter;
