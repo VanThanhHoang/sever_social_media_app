@@ -33,4 +33,21 @@ const getDetailUser = async (req, res) => {
     res.status(400).json({ message: "error" });
   }
 }
-export const UserController = { updateInfo, getDetailUser};
+// find by full name or userName
+const searchUser = async (req, res) => {
+ try{
+    const { q } = req.query;
+    const users = await UserModel.find({$or:[{fullName:{$regex:q}},{userName:{$regex:q}}]});
+    res.status(200).json({message:"success",data:users});
+ }catch(error){
+   console.log(error.message);
+   res.status(400).json({message:"error",data:[]});
+ }
+}
+const checkUserNameExisted = async (req,res) => {
+  const { userName } = req.params;
+  const isUserNameExisted = await UserModel.findOne({ userName });
+  if(isUserNameExisted) return res.status(400).json({ message: "userName is existed" });
+  else return res.status(200).json({ message: "userName is not existed" });
+  }
+export const UserController = { updateInfo, getDetailUser,searchUser,checkUserNameExisted};

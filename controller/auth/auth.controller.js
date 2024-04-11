@@ -39,6 +39,7 @@ const verifyGoogleIdToken = async (req, res) => {
       });
     } else {
       const newUser = new UserModel({
+        userName: getUsernameFromId(userGoogleInfo.googleId),
         googleId: userGoogleInfo.googleId,
         fullName: userGoogleInfo.fullName,
         avatar: userGoogleInfo.avatar,
@@ -97,6 +98,13 @@ const getGoogleTicket = async (idToken) => {
     requiredAudience: process.env.GOOGLE_CLIENT_ID,
   });
 };
+function getUsernameFromId(id) {
+  // Lấy 6 ký tự cuối cùng của _id và chuyển đổi thành chuỗi hex
+  const hexString = id.slice(-6);
+  // Chuyển đổi hex thành số thập phân
+  const decimalNumber = parseInt(hexString, 16);
+  return "user_" + decimalNumber;
+}
 export const authController = {
   verifyGoogleIdToken,
 };

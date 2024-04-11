@@ -4,4 +4,8 @@ import { jwtVerifyMiddleware } from "../../middleware/jwt_middleware.js";
 const userRouter = Router();
 userRouter.patch("/update_info",jwtVerifyMiddleware,UserController.updateInfo)
 userRouter.get("/:id",jwtVerifyMiddleware,UserController.getDetailUser)
+userRouter.put("/follow/:id",jwtVerifyMiddleware,UserController.getDetailUser)
+userRouter.get("/s/search",jwtVerifyMiddleware,UserController.searchUser)
+userRouter.get("/check/:userName",jwtVerifyMiddleware,UserController.checkUserNameExisted)
+
 export default userRouter;
