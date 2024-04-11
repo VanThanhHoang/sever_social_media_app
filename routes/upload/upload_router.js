@@ -16,12 +16,14 @@ initializeApp(firebase_config);
 const storage = getStorage();
 const upload = multer({ storage: multer.memoryStorage() });
 
-uploadRouter.post("/", upload.single("filename"), async (req, res) => {
+uploadRouter.post("/", upload.single("image"), async (req, res) => {
   try {
+    console.log("Uploading file...");
+    console.log("req.file", req.file);
     if (!req.file) {
       return res.status(400).send("No file uploaded.");
     }
-
+    
     const dimensions = imageSize(req.file.buffer);
     const dateTime = giveCurrentDateTime();
     const storageRef = ref(
