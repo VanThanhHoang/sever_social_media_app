@@ -1,4 +1,4 @@
-import { json } from "body-parser";
+
 import { UserModel,SearchHistoryModel } from "../../models/user.js";
 
 const updateInfo = async (req, res) => {
