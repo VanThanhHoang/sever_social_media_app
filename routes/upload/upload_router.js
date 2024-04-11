@@ -18,8 +18,6 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 uploadRouter.post("/", upload.single("image"), async (req, res) => {
   try {
-    console.log("Uploading file...");
-    console.log("req.file", req.file);
     if (!req.file) {
       return res.status(400).send("No file uploaded.");
     }
@@ -53,7 +51,7 @@ uploadRouter.post("/", upload.single("image"), async (req, res) => {
     const resizedDimensions = imageSize(resizedImageBuffer);
 
     console.log("File successfully uploaded.");
-    return res.status(200).send({
+    return res.status(200).json({
       status: 200,
       message: "file uploaded to firebase storage",
       data: {
