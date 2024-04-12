@@ -4,7 +4,7 @@ import { UserModel,SearchHistoryModel } from "../../models/user.js";
 const updateInfo = async (req, res) => {
   try {
     const { user } = req;
-    const { userName, fullName, dob, gender, account_type, links, bio } =
+    const { avatar,userName, fullName, dob, gender, account_type, links, bio } =
       req.body;
     const userExisted = await UserModel.findOne({ _id: user.id });
     if (fullName) userExisted.fullName = fullName;
@@ -13,6 +13,7 @@ const updateInfo = async (req, res) => {
       if (!isUserNameExisted) userExisted.userName = userName;
       else return res.status(400).json({ message: "userName is existed" });
     }
+    if(avatar) userExisted.avatar = avatar;
     if (dob) userExisted.dob = dob;
     if (account_type) userExisted.account_type = account_type;
     if (gender) userExisted.gender = gender;
