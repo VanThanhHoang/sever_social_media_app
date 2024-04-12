@@ -105,6 +105,14 @@ function getUsernameFromId(id) {
   const decimalNumber = parseInt(hexString, 16);
   return "user_" + decimalNumber;
 }
+const logOut = async (req, res) => {
+  const { id } = req.user;
+  const user = await UserModel.findOneAndUpdate({ _id: id },{
+    fcm_token: "",
+  });
+  res.status(200).json({ status: "success", data: user });
+}
 export const authController = {
   verifyGoogleIdToken,
+  logOut,
 };

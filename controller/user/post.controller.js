@@ -15,7 +15,15 @@ const uploadPost = async (req, res) => {
   });
   await post.save();
   const mediaSaved = await uploadMedia(media, post._id, res);
-  res.status(200).json({ message: "upload post success", data: { ...post._doc, media: mediaSaved }});
+  const postSaved = await getDetailPostById(post._id);
+  res.status(200).json({
+    message: "upload post success",
+    data: {
+      ...postSaved,
+      isMine: id === postSaved.author._id,
+      isLiked: postSaved.reactions.some((reaction) => reaction._id === id),
+    },
+  });
 };
 const uploadMedia = async (media, postId, res) => {
   let mediaSaved = [];
@@ -45,7 +53,7 @@ const upDatePost = async (req, res) => {
       path: "author",
       select: "userName fullName avatar",
       model: "VNPIC.User",
-    })
+    });
     if (mediaDelete) {
       for (const item of mediaDelete) {
         await PostMediaModel.findByIdAndDelete(item);
@@ -67,6 +75,7 @@ const upDatePost = async (req, res) => {
 
 const getAllPost = async (req, res) => {
   try {
+    console.log(req.user);
     const { id } = req.user;
     console.log(id);
     const page = parseInt(req.query.page) || 1;
@@ -75,22 +84,21 @@ const getAllPost = async (req, res) => {
     // Tính toán chỉ số skip
     const skip = (page - 1) * pageSize;
     // Lấy số lượng bài viết dựa trên skip và pageSize
-    let posts = await PostModel.find(
-      { status: 0 },
-    )
+    let posts = await PostModel.find({ status: 0 })
       .populate({
         path: "author",
         select: "userName fullName avatar",
         model: "VNPIC.User",
-      }).
-      populate({
-        path:"reposter",
+      })
+      .populate({
+        path: "reposter",
         select: "userName fullName avatar",
         model: "VNPIC.User",
       })
       .skip(skip)
       .limit(pageSize)
-      .lean().sort({ createdAt: -1 });
+      .lean()
+      .sort({ createdAt: -1 });
 
     // Đếm tổng số bài viết
     const totalPosts = await PostModel.countDocuments({ status: 0 });
@@ -110,18 +118,19 @@ const getAllPost = async (req, res) => {
       model: "VNPIC.User",
     });
     // Thêm phương tiện và các trường khác vào mỗi bài viết
-    posts.forEach(async (post) => {
+    await Promise.all(posts.map(async (post) => {
       post.media = postMedia.filter((media) => media.post_id.equals(post._id));
-      post.comments = [];
       const userReaction = reactions.filter((reaction) =>
         reaction.post_id.equals(post._id)
       );
+      post.comments = await getCommentByPostId(post._id);
       post.reactions = userReaction.map((reaction) => reaction.user_id);
       post.isMine = post.author._id.equals(id);
       post.isLiked = userReaction.some((reaction) =>
         reaction.user_id._id.equals(id)
       );
-    });
+    }));
+    
 
     // Tạo object chứa dữ liệu cần trả về
     const responseData = {
@@ -181,31 +190,31 @@ const deletePost = async (req, res) => {
   }
 };
 const postReaction = async (req, res) => {
- try{
-  const { id } = req.params;
-  const { id: user_id } = req.user;
-  // Kiểm tra xem người dùng đã có phản ứng trên bài đăng này chưa
-  const existingReaction = await ReactionModel.findOne({
-    post_id: id,
-    user_id,
-  });
-  if (existingReaction) {
-    // Nếu đã có phản ứng từ người dùng trước đó, xoá nó
-    await ReactionModel.findByIdAndDelete(existingReaction._id);
-    res.status(200).json({ message: "post reaction removed" });
-  } else {
-    // Nếu chưa có phản ứng từ người dùng, thêm mới phản ứng
-    const reaction = new ReactionModel({
+  try {
+    const { id } = req.params;
+    const { id: user_id } = req.user;
+    // Kiểm tra xem người dùng đã có phản ứng trên bài đăng này chưa
+    const existingReaction = await ReactionModel.findOne({
       post_id: id,
       user_id,
     });
-    await reaction.save();
-    res.status(200).json({ message: "post reaction success" });
-  }
- }catch(err){
+    if (existingReaction) {
+      // Nếu đã có phản ứng từ người dùng trước đó, xoá nó
+      await ReactionModel.findByIdAndDelete(existingReaction._id);
+      res.status(200).json({ message: "post reaction removed" });
+    } else {
+      // Nếu chưa có phản ứng từ người dùng, thêm mới phản ứng
+      const reaction = new ReactionModel({
+        post_id: id,
+        user_id,
+      });
+      await reaction.save();
+      res.status(200).json({ message: "post reaction success" });
+    }
+  } catch (err) {
     console.log(err);
     res.status(400).json({ message: "post reaction failed, bad request" });
- }
+  }
 };
 const repost = async (req, res) => {
   const { id } = req.params;
@@ -221,14 +230,67 @@ const repost = async (req, res) => {
   await repost.save();
   res.status(200).json({ message: "repost success", data: repost });
 };
+const comment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { body,repply_to } = req.body;
+    const { id: user_id } = req.user;
+    const comment = new CommentModel({
+      post_id: id,
+      create_by: user_id,
+      comment: body,
+      reply_to:repply_to ?? null
+    });
+    await comment.save();
+    await comment.populate({
+      path: "create_by",
+      select: "userName fullName avatar",
+      model: "VNPIC.User",
+    });
+    res.status(200).json({ message: "comment success", data: comment });
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({ message: "comment failed, bad request" });
+  }
+};
+const getCommentByPostId = async (id) => {
+  try{
+    const comments = await CommentModel.find({ post_id: id,status:0 ,reply_to:null}).populate({
+      path: "create_by",
+      select: "userName fullName avatar",
+      model: "VNPIC.User",
+    });
+    const commentWithReplyPromises= comments.map( async (comment) => {
+      const reply = await CommentModel.find({ reply_to: comment._id,status:0 }).populate({
+        path: "create_by",
+        select: "userName fullName avatar",
+        model: "VNPIC.User",
+      });
+      return { ...comment._doc, repplies : reply};
+    });
+    const comment= await Promise.all(commentWithReplyPromises);
+    return comment;
+  }catch(err){
+    console.log(err);
+    return [];
+  }
+};
+const deleteComment = async (req, res) => {
+  const { id } = req.params;
+  const comment = await CommentModel.findOneAndUpdate({_id:id}, { status: 1 })
+  res.status(200).json({ message: "delete comment success", data: comment });
+};
 
 export const postController = {
   uploadPost,
   getAllPost,
+  comment,
   deleteAllPost,
   upDatePost,
   getDetailPost,
   deletePost,
   postReaction,
   repost,
+  getCommentByPostId,
+  deleteComment,
 };
