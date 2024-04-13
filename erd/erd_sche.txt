@@ -1,0 +1,104 @@
+// Use DBML to define your database structure
+// PASTE THIS TO SITE https://dbdiagram.io/
+
+
+
+Table users {
+  id objectId [primary key]
+  userName varchar
+  password varchar
+  otpTimeExpiration varchar
+  otp varchar
+  fullName varchar
+  avatar varchar
+  dob timestamp
+  googleId varchar
+  role enum // 0 admin, 1  user
+  following_status enum // 0 notFollowing, 1 following, 2 requeted
+  account_type enum // 0 private, 1 public
+  updated_at timestamp
+  created_at timestamp
+  activeStatus enum // 0 active 1 inactive 2 blocked
+}
+Table followers {
+  id objectId
+  follower_id objectId
+  userId objectId
+  type enum // 0 follower 1 following 3 requested
+}
+Table posts {
+  id objectId [primary key]
+  body text [note: 'Content of the post']
+  user_id objectId
+  status enum // 0 show 1 hide
+  privacy enum 
+  updated_at timestamp
+  created_at timestamp
+}
+Table postMedia {
+  id objectId
+  link varchar
+  post_id objectId
+  orientation enum // 0 vertical 1 horizontal
+  width integer
+  height integer  
+  updated_at timestamp
+  created_at timestamp
+}
+Table reactions {
+  user_id objectId
+  post_id objectId
+    updated_at timestamp
+  created_at timestamp
+}
+Table comments {
+  id objectId
+  create_by objectId
+  comment varchar
+  post_id objectId
+  reply_to objectId
+  status enum //0 "active" 1 "inactive" 
+  updated_at timestamp
+  created_at timestamp
+}
+Table notification {
+  id objectId
+  type enum // 0 noti onlyread 1 noti accpect follow
+  isRead boolean
+  sender objectId
+  body varchar
+  notiTo objectId
+  updated_at timestamp
+  created_at timestamp
+
+}
+
+Table userBlocked{
+  id objectId
+  user objectId
+  userBlocked objectId
+}
+
+Table searchHistory{
+  id objectId
+  userId objectId
+  q varchar
+  updated_at timestamp
+  created_at timestamp
+}
+Ref:  reactions.user_id  > users.id // many-to-one
+Ref:  reactions.post_id> posts.id // many-to-one=
+
+Ref: users.id < followers.follower_id
+Ref: users.id < followers.userId
+Ref: comments.create_by > users.id
+Ref: comments.post_id> posts.id
+Ref: comments.reply_to > comments.id
+Ref: posts.user_id > users.id
+Ref: postMedia.post_id > posts.id
+Ref: notification.notiTo > users.id
+Ref: notification.sender > users.id
+
+Ref: users.id < userBlocked.user
+Ref: users.id < userBlocked.userBlocked
+Ref: users.id < searchHistory.userId
