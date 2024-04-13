@@ -10,7 +10,7 @@
     <!-- Fontawesome link here -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <!-- CSS link here -->
-    <link rel="stylesheet" href="http://localhost:8000/static/style.css">
+    <link rel="stylesheet" href="https://sever-social-media-app.onrender.com/static/style.css">
     <title>Document</title>
 </head>
 <body>
@@ -19,7 +19,7 @@
         <div class="modal-overlay"></div>
         <div class="pop-up">
             <div class="pop-up-img-wrapper">
-                <img src="http://localhost:8000/static/processing.jpg" alt="" class="pop-up-img">
+                <img src="https://sever-social-media-app.onrender.com/static/processing.jpg" alt="" class="pop-up-img">
             </div>
             <div style="display: flex;">
                 <h3 class="pop-up-title">Tải ứng dụng VNPIC</h3>
@@ -86,14 +86,12 @@
         document.querySelector('.modal').classList.remove('show');
         console.log('close');   
     }
-    const base_url = "http://localhost:8000";
-    // get detail post by id /post/get_post/66161a5664eab34dcc9dc87e
-    // const id = "<%= id %>";
-    // fetch(`${base_url}/post/get_post_public/${id}`)
-    //   .then((response) => response.json())
-    //   .then((data) => {
-    //     console.log(data);
-    //     document.getElementById("p").innerText = JSON.stringify(data.data);
-    //   });
+    const base_url = "https://sever-social-media-app.onrender.com";
+    const id = "<%= id %>";
+    fetch(`${base_url}/post/get_post_public/${id}`)
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data);
+      }).catch(err=>console.log(err));
   </script>
 </html>
