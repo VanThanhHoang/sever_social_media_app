@@ -169,12 +169,18 @@ const getDetailPostById = async (id) => {
     select: "userName fullName avatar",
     model: "VNPIC.User",
   });
+  const reactions = await ReactionModel.find({ post_id: id }).populate({
+    path: "user_id",
+    select: "userName fullName avatar",
+    model: "VNPIC.User",
+  })
+  const comments = await getCommentByPostId(id);
   const postMedia = await PostMediaModel.find({ post_id: id });
   return {
     ...post._doc,
     media: postMedia,
-    comments: [],
-    reactions: [],
+    comments,
+    reactions,
   };
 };
 const getPostByUser = async (req, res) => {};

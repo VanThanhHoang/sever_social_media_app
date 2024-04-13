@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <!-- CSS link here -->
     <link rel="stylesheet" href="https://sever-social-media-app.onrender.com/static/style.css">
-    <title>Document</title>
+    <title>VNPIC</title>
 </head>
 <body>
 
@@ -39,8 +39,7 @@
                     <div class="card__header-info">
                         <div class="card__header-info-top">
                             <div class="card__header-author">
-                                <span class="card__header-author-name">pewdiepie</span>
-                                <div class="card__header-author-checkmark"><svg aria-label="Verified" width="16" height="16" class="x1lliihq x1n2onr6" fill="rgb(0, 149, 246)" role="img" viewBox="0 0 40 40"><title>Verified</title><path d="M19.998 3.094 14.638 0l-2.972 5.15H5.432v6.354L0 14.64 3.094 20 0 25.359l5.432 3.137v5.905h5.975L14.638 40l5.36-3.094L25.358 40l3.232-5.6h6.162v-6.01L40 25.359 36.905 20 40 14.641l-5.248-3.03v-6.46h-6.419L25.358 0l-5.36 3.094Zm7.415 11.225 2.254 2.287-11.43 11.5-6.835-6.93 2.244-2.258 4.587 4.581 9.18-9.18Z" fill-rule="evenodd"></path></svg></div>
+                                <span id="authorName" class="card__header-author-name"></span>
                             </div>
                             <div class="card__header-actions"><i class="fa-solid fa-ellipsis"></i></div>
                         </div>
@@ -50,19 +49,18 @@
                     </div>
                 </div>
                 <div class="card__body">
-                    <h4 class="card__body-desc">Green flag to those people who updates you because they know how you over thinking while waiting for them</h4>
-                    <div class="card__body-media">
-                        <img src="https://images.unsplash.com/photo-1561948955-570b270e7c36?q=80&w=1802&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="">
+                    <h4 id="content" class="card__body-desc">Green flag to those people who updates you because they know how you over thinking while waiting for them</h4>
+                    <div id="mediaContainer" style="display: flex;flex-direction: row;gap: 10px;overflow: hidden;" class="card__body-media">
                     </div>
                 </div>
                 <div class="card__footer">
                     <div class="card__footer-btn">
                         <ion-icon class="card__footer-icon" name="star-outline"></ion-icon>
-                        <span>1910</span>
+                        <span id="reactionCount">1910</span>
                     </div>
                     <div class="card__footer-btn">
                         <ion-icon class="card__footer-icon" name="chatbubble-outline"></ion-icon>
-                        <span>183</span>
+                        <span id="cmtCount">183</span>
                     </div>
                     <div class="card__footer-btn">
                         <ion-icon class="card__footer-icon" name="repeat-outline"></ion-icon>
@@ -70,7 +68,6 @@
                     </div>
                     <div class="card__footer-btn">
                         <ion-icon class="card__footer-icon" name="paper-plane-outline"></ion-icon>
-                        <span>24</span>
                     </div>
                 </div>
             </div>
@@ -86,12 +83,30 @@
         document.querySelector('.modal').classList.remove('show');
         console.log('close');   
     }
-    const base_url = "https://sever-social-media-app.onrender.com";
+    
+    const base_url = "http://localhost:8000";
+    //const base_url = "https://sever-social-media-app.onrender.com";
+    const authorName = document.getElementById('authorName');
+    const content = document.getElementById('content');
+    const mediaContainer = document.getElementById('mediaContainer');
+    const reactionCount = document.getElementById('reactionCount');
+    const cmtCount = document.getElementById('cmtCount');
     const id = "<%= id %>";
+    
     fetch(`${base_url}/post/get_post_public/${id}`)
       .then((response) => response.json())
       .then((data) => {
-        console.log(data);
+        console.log(data.data);
+        const postData = data.data;
+        authorName.innerText = postData.author.userName;
+        content.innerText = postData.body;
+        postData.media.forEach(media=>{
+            const img = document.createElement('img');
+            img.src = media.link;
+            mediaContainer.appendChild(img);
+        });
+        cmtCount.innerText = postData.comments.length;
+        reactionCount.innerText = postData.reactions.length;
       }).catch(err=>console.log(err));
   </script>
 </html>
