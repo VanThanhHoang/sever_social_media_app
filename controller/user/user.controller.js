@@ -86,7 +86,7 @@ const follow = async (req, res) => {
   try {
     const { id } = req.params;
     const { id: user_id } = req.user;
-   
+    
   } catch (error) {
     console.log(error.message);
     res.status(400).json({ message: "error" });
