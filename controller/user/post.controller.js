@@ -119,13 +119,21 @@ const getAllPost = async (req, res) => {
     });
     // Thêm phương tiện và các trường khác vào mỗi bài viết
     await Promise.all(posts.map(async (post) => {
+      if(!post.author) {
+        post.author = {
+          _id: "1",
+          userName: 'HiddenUser',
+          fullName: "Người Dùng Bị Ẩn",
+          avatar: 'https://i.pinimg.com/736x/0d/64/98/0d64989794b1a4c9d89bff571d3d5842.jpg'
+        }
+      }
       post.media = postMedia.filter((media) => media.post_id.equals(post._id));
       const userReaction = reactions.filter((reaction) =>
         reaction.post_id.equals(post._id)
       );
       post.comments = await getCommentByPostId(post._id);
       post.reactions = userReaction.map((reaction) => reaction.user_id);
-      post.isMine = post.author._id.equals(id);
+      post.isMine = post.author._id === id;
       post.isLiked = userReaction.some((reaction) =>
         reaction.user_id._id.equals(id)
       );

@@ -82,6 +82,27 @@ const clearSearchHistory = async (req, res) => {
   const searchHistory = await SearchHistoryModel.deleteMany({ user: id });
   res.status(200).json({ message: "delete success", data: searchHistory });
 }
+const follow = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { id: user_id } = req.user;
+    const user = await UserModel.findOne({ _id: id });
+    if (!user) return res.status(400).json({ message: "user not found" });
+    if (user_id == id)
+      return res.status(400).json({ message: "can not follow yourself" });
+    if (user.followers.includes(user_id))
+      return res.status(400).json({ message: "you are followed" });
+    user.followers.push(user_id);
+    await user.save();
+    res.status(200).json({ message: "follow success" });
+  } catch (error) {
+    console.log(error.message);
+    res.status(400).json({ message: "error" });
+  }
+}
+const sendFollowRequest =  (req, res) => {
+
+}
 export const UserController = {
   updateInfo,
   getDetailUser,
@@ -89,5 +110,6 @@ export const UserController = {
   checkUserNameExisted,
   getSearchHistory,
   deleteSearchHistory,
-  clearSearchHistory
+  clearSearchHistory,
+  follow,
 };

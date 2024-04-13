@@ -10,4 +10,6 @@ userRouter.get("/check/:userName",jwtVerifyMiddleware,UserController.checkUserNa
 userRouter.get("/s/search/history",jwtVerifyMiddleware,UserController.getSearchHistory)
 userRouter.delete("/deleteSearchHistory/:id",jwtVerifyMiddleware,UserController.deleteSearchHistory)
 userRouter.delete("/clearSearchHistory",jwtVerifyMiddleware,UserController.clearSearchHistory)  
+userRouter.patch("/follow/:id",jwtVerifyMiddleware,UserController.follow)  
+
 export default userRouter;
