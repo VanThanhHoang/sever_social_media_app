@@ -14,7 +14,7 @@ const userSchema = new Schema(
     fullName: String,// can update
     avatar: String, // can update
     dob: Date, // can update
-    gender: { type: Number, enum: [0, 1, 2] }, // can update
+    gender: { type: Number, enum: [0, 1, 2],default:0 }, // can update
     googleId: String, 
     bio: String, // can update,
     // link array of string

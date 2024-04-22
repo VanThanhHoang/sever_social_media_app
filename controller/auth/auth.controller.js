@@ -3,6 +3,7 @@ import { OAuth2Client } from "google-auth-library";
 import { UserModel } from "../../models/user.js";
 import { makeToken } from "../../helper/jwt_helper.js";
 import dotenv from "dotenv";
+import nodemailer from "nodemailer";
 dotenv.config();
 const verifyGoogleIdToken = async (req, res) => {
   const { idToken, fcm_token } = req.body;
@@ -49,7 +50,6 @@ const verifyGoogleIdToken = async (req, res) => {
         following_status: 0,
         account_type: 1,
         fcm_token: fcm_token ?? "",
-
       });
       await newUser.save();
       const accessToken = makeToken({
@@ -107,12 +107,66 @@ function getUsernameFromId(id) {
 }
 const logOut = async (req, res) => {
   const { id } = req.user;
-  const user = await UserModel.findOneAndUpdate({ _id: id },{
-    fcm_token: "",
-  });
+  const user = await UserModel.findOneAndUpdate(
+    { _id: id },
+    {
+      fcm_token: "",
+    }
+  );
   res.status(200).json({ status: "success", data: user });
-}
+};
+// register with username, password, email
+const register = async (req, res) => {};
+const sendOtp = async (req, res) => {
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: "npq252@gmail.com",
+      pass: "lfet elee fzbfkzhb",
+    },
+  });
+  const otp = makeOtp();
+  const mailOptions = {
+    from: "VNPIC",
+    to: "hoangvanthanhdev@gmail.com",
+    subject: "VNPIC OTP",
+    html: makeMailHtml(otp.otp),
+  };
+
+  transporter.sendMail(mailOptions, function (error, info) {
+    if (error) {
+      res.status(500).json({ status: "error", error: error });
+      console.log(error);
+    } else {
+      res.status(200).json({ status: "Otp sent"});
+      console.log("Email sent: " + info.response);
+    }
+  });
+};
+// is obj with key: otp, expiredAt
+// time 15 minutes when otp is created
+// otp is 4 digits
+const makeOtp = () => {
+  const otp = Math.floor(1000 + Math.random() * 9000);
+  const expiredAt = new Date();
+  expiredAt.setMinutes(expiredAt.getMinutes() + 15);
+  return { otp, expiredAt };
+};
+const makeMailHtml = (otp) => {
+  return `<body>
+  <h2>Xác thực bằng OTP từ VN PIC</h2>
+  <p>Chào bạn,</p>
+  <p>Dưới đây là mã OTP của bạn để xác thực trong ứng dụng VN PIC:</p>
+  <p><strong>Mã OTP:</strong>${otp}</p>
+  <p>Vui lòng sử dụng mã OTP trên trong vòng 15 phút kể từ thời điểm nhận email này.</p>
+  <p>Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email này.</p>
+  <p>Trân trọng,</p>
+  <p>Đội ngũ hỗ trợ VN PIC</p>
+</body>`;
+};
 export const authController = {
   verifyGoogleIdToken,
   logOut,
+  register,
+  sendOtp,
 };
