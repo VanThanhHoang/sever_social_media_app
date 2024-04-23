@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import bcrypt from "bcrypt";
 import nodemailer from "nodemailer";
 import { get } from "mongoose";
+import e from "cors";
 dotenv.config();
 const verifyGoogleIdToken = async (req, res) => {
   const { idToken, fcm_token } = req.body;
@@ -185,20 +186,26 @@ const loginWithEmail_Pass = async (req, res) => {
     if (!user) {
       return res.status(400).json({ status: "error", error: "User not found" });
     }
-    const isMatch = await bcrypt.compare(user.password,password)
-    console.log(isMatch)
 
-    if (!isMatch) {
-      return res
-        .status(400)
-        .json({ status: "error", error: "Password not match" });
-    }
-    const accessToken = makeToken({ id: user._id, email: user.email });
-    const refreshToken = makeToken({ id: user._id, email: user.email }, true);
-    user.password = "";
-    res.status(200).json({
-      status: "success",
-      data: { ...user._doc, accessToken, refreshToken },
+    bcrypt.compare(password, user.password, (err, result) => {
+      console.log(result);
+      if (err) {
+        res.status(500).json({ status: "error", error: err });
+      }
+      if (!result) {
+        return res.status(400).json({ message: "Password not match" });
+      } else {
+        const accessToken = makeToken({ id: user._id, email: user.email });
+        const refreshToken = makeToken(
+          { id: user._id, email: user.email },
+          true
+        );
+        user.password = "";
+        res.status(200).json({
+          status: "success",
+          data: { ...user._doc, accessToken, refreshToken },
+        });
+      }
     });
   } catch (err) {
     console.log(err);
@@ -323,7 +330,13 @@ const changePass = async (req, res) => {
     const { user } = req;
     const { oldPass, newPass } = req.body;
     const userExisted = await UserModel.findOne({ _id: user.id });
-    const isMatch = await bcrypt.compare(oldPass, userExisted.password);
+    let isMatch;
+    bcrypt.compare(password, userExisted.password, (err, result) => {
+      if (err) {
+        isMatch = false;
+      }
+      return (isMatch = result);
+    });
     if (!isMatch) {
       return res.status(400).json({ message: "Password not match" });
     }
