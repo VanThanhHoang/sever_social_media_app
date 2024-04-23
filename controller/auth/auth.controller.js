@@ -3,9 +3,12 @@ import { OAuth2Client } from "google-auth-library";
 import { UserModel } from "../../models/user.js";
 import { makeToken } from "../../helper/jwt_helper.js";
 import dotenv from "dotenv";
+import bcrypt from "bcrypt";
 import nodemailer from "nodemailer";
+import { get } from "mongoose";
 dotenv.config();
 const verifyGoogleIdToken = async (req, res) => {
+  n;
   const { idToken, fcm_token } = req.body;
   try {
     const ticket = await getGoogleTicket(idToken);
@@ -115,33 +118,158 @@ const logOut = async (req, res) => {
   );
   res.status(200).json({ status: "success", data: user });
 };
-// register with username, password, email
-const register = async (req, res) => {};
-const sendOtp = async (req, res) => {
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: "npq252@gmail.com",
-      pass: "lfet elee fzbfkzhb",
-    },
-  });
-  const otp = makeOtp();
-  const mailOptions = {
-    from: "VNPIC",
-    to: "hoangvanthanhdev@gmail.com",
-    subject: "VNPIC OTP",
-    html: makeMailHtml(otp.otp),
-  };
 
-  transporter.sendMail(mailOptions, function (error, info) {
-    if (error) {
-      res.status(500).json({ status: "error", error: error });
-      console.log(error);
-    } else {
-      res.status(200).json({ status: "Otp sent"});
-      console.log("Email sent: " + info.response);
+// {
+//   password: String,
+//   userName: String, // can update not duplicate
+//   fullName: String,// can update
+//   avatar: String, // can update
+//   dob: Date, // can update
+//   gender: { type: Number, enum: [0, 1, 2],default:0 }, // can update
+//   googleId: String,
+//   bio: String, // can update,
+//   // link array of string
+//   links: [{ type: String }],
+//   role: { type: Number, enum: [0, 1] },
+//   following_status: { type: Number, enum: [0, 1, 2] },
+//   account_type: { type: Number, enum: [0, 1],default:1},// can update
+//   fcm_token: String,
+// }
+// register with username, password, email
+const registerWithEmail_Pass = async (req, res) => {
+  try {
+    const { password, email, gender, account_type } = req.body;
+    const user = await UserModel.find({ email: "hoangvanthanhdev3@gmail" });
+    if (!password || !email || isNaN(gender) || isNaN(account_type)) {
+      return res.status(400).json({ status: "error", error: "Missing field" });
     }
+    if (await checkUserExistedByEmail(email)) {
+      return res.status(400).json({ status: "error", error: "Email existed" });
+    }
+    const enscryptPassword = await bcrypt.hash(password, 10);
+    const newUser = await new UserModel({
+      password: enscryptPassword,
+      email,
+      gender,
+      account_type,
+    }).save();
+    const userName = getUsernameFromId(newUser._id.toString());
+    newUser.userName = userName;
+    await newUser.save();
+
+    res.status(200).json({ status: "success", data: newUser });
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({ status: "error", error: err });
+  }
+};
+// make sample json for resgister
+/*
+  {
+    "userName":"hoangvanthanh",
+    "password":"123456",
+    "email":"hoangvanthanhdev@gmail
+    "gender":0,
+    "account_type":1
+  }
+*/
+const loginWithEmail_Pass = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ status: "error", error: "Missing field" });
+    }
+    const user = await UserModel.findOne({
+      email: { $regex: new RegExp(email, "i") },
+    });
+    if (!user) {
+      return res.status(400).json({ status: "error", error: "User not found" });
+    }
+    const isMatch = bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res
+        .status(400)
+        .json({ status: "error", error: "Password not match" });
+    }
+    const accessToken = makeToken({ id: user._id, email: user.email });
+    const refreshToken = makeToken({ id: user._id, email: user.email }, true);
+    user.password = "";
+    res.status(200).json({
+      status: "success",
+      data: { ...user._doc, accessToken, refreshToken },
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json("Server err");
+  }
+};
+const checkUserExisted = async (userName) => {
+  const userExisted = await UserModel.findOne({ userName });
+  return userExisted;
+};
+const checkUserExistedByEmail = async (email) => {
+  const userExisted = await UserModel.findOne({
+    email: { $regex: new RegExp(email, "i") },
   });
+  return userExisted;
+};
+const sendOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await UserModel.findOne({
+      email: { $regex: new RegExp(email, "i") },
+    });
+    if (!user) {
+      return res.status(403).json({
+        message: "email is not use",
+      });
+    }
+    if (!email) {
+      return res.status(403).json({
+        message: "email is missing",
+      });
+    }
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: "npq252@gmail.com",
+        pass: "lfet elee fzbfkzhb",
+      },
+    });
+    const otp = makeOtp();
+    saveOtp(user.email, otp);
+    const mailOptions = {
+      from: "VNPIC",
+      to: email,
+      subject: "VNPIC OTP",
+      html: makeMailHtml(otp.otp),
+    };
+
+    transporter.sendMail(mailOptions, function (error, info) {
+      if (error) {
+        res.status(500).json({ status: "error", error: error });
+        console.log(error);
+      } else {
+        res.status(200).json({ status: "Otp sent" });
+        console.log("Email sent: " + info.response);
+      }
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: "errr",
+    });
+  }
+};
+const saveOtp = async (email, otp) => {
+  const userExisted = await UserModel.findOne({
+    email: { $regex: new RegExp(email, "i") },
+  });
+  console.log(userExisted);
+  userExisted.otp = otp.otp;
+  userExisted.otpEx = otp.expiredAt;
+  userExisted.save();
 };
 // is obj with key: otp, expiredAt
 // time 15 minutes when otp is created
@@ -164,9 +292,54 @@ const makeMailHtml = (otp) => {
   <p>Đội ngũ hỗ trợ VN PIC</p>
 </body>`;
 };
+const changePassWithOtp = async (req, res) => {
+  try {
+    const { email, otp, newPass } = req.body;
+    const user = await UserModel.findOne({
+      email: { $regex: new RegExp(email, "i") },
+    });
+    if (!user) {
+      return res.status(403).json({ status: "error", error: "User not found" });
+    }
+    if (user.otp !== otp) {
+      return res.status(403).json({ status: "error", error: "Otp not match" });
+    }
+    if (user.otpEx < Date.now()) {
+      return res.status(403).json({ status: "error", error: "Otp expired" });
+    }
+    user.password = await bcrypt.hash(newPass, 10);
+    user.otp = "";
+    user.otpEx = "";
+    await user.save();
+    res.status(200).json({ status: "success", data: user });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ status: "error", error: err });
+  }
+};
+const changePass = async (req, res) => {
+  try {
+    const { user } = req;
+    const { oldPass, newPass } = req.body;
+    const userExisted = await UserModel.findOne({ _id: user.id });
+    const isMatch = bcrypt.compare(oldPass, userExisted.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Password not match" });
+    }
+    userExisted.password = await bcrypt.hash(newPass, 10);
+    await userExisted.save();
+    res.status(200).json({ message: "update success", data: userExisted });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "error" });
+  }
+};
 export const authController = {
   verifyGoogleIdToken,
   logOut,
-  register,
+  registerWithEmail_Pass,
   sendOtp,
+  loginWithEmail_Pass,
+  changePassWithOtp,
+  changePass,
 };

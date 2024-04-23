@@ -7,6 +7,11 @@ const authRouter = Router();
 */
 authRouter.post("/login-google",authController.verifyGoogleIdToken);
 authRouter.post("/log-out",jwtVerifyMiddleware,authController.logOut);
-authRouter.post("/register",jwtVerifyMiddleware,authController.register);
+authRouter.post("/register",authController.registerWithEmail_Pass);
 authRouter.post("/send-otp",authController.sendOtp);
+authRouter.post("/login",authController.loginWithEmail_Pass);
+authRouter.post("/change_pass_otp",authController.changePassWithOtp);
+authRouter.post("/change_pass",jwtVerifyMiddleware,authController.changePass);
+
+
 export default authRouter;

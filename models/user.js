@@ -9,10 +9,13 @@ import mongoose from "mongoose";
 const { Schema } = mongoose;
 const userSchema = new Schema(
   {
+    email: String,
     password: String,
+    otp:String,
+    otpEx:String,
     userName: String, // can update not duplicate
     fullName: String,// can update
-    avatar: String, // can update
+    avatar: {type:String,default:'https://i.pinimg.com/236x/4b/f3/2a/4bf32ae5f06735b1d83174e9c90a385b.jpg'}, // can update
     dob: Date, // can update
     gender: { type: Number, enum: [0, 1, 2],default:0 }, // can update
     googleId: String, 
