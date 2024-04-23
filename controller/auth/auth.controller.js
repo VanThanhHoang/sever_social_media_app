@@ -185,7 +185,9 @@ const loginWithEmail_Pass = async (req, res) => {
     if (!user) {
       return res.status(400).json({ status: "error", error: "User not found" });
     }
-    const isMatch = bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(user.password,password)
+    console.log(isMatch)
+
     if (!isMatch) {
       return res
         .status(400)
@@ -321,7 +323,7 @@ const changePass = async (req, res) => {
     const { user } = req;
     const { oldPass, newPass } = req.body;
     const userExisted = await UserModel.findOne({ _id: user.id });
-    const isMatch = bcrypt.compare(oldPass, userExisted.password);
+    const isMatch = await bcrypt.compare(oldPass, userExisted.password);
     if (!isMatch) {
       return res.status(400).json({ message: "Password not match" });
     }
