@@ -8,7 +8,6 @@ import nodemailer from "nodemailer";
 import { get } from "mongoose";
 dotenv.config();
 const verifyGoogleIdToken = async (req, res) => {
-  n;
   const { idToken, fcm_token } = req.body;
   try {
     const ticket = await getGoogleTicket(idToken);
