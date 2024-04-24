@@ -56,7 +56,7 @@ const searchUser = async (req, res) => {
       user: req.user.id,
       search: q,
     }).save();
-    res.status(200).json({ message: "success", data: json });
+    res.status(200).json({ message: "success", data: users });
   } catch (error) {
     console.log(error.message);
     res.status(400).json({ message: "error", data: [] });
