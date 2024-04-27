@@ -11,7 +11,7 @@ authRouter.post("/register",authController.registerWithEmail_Pass);
 authRouter.post("/send-otp",authController.sendOtp);
 authRouter.post("/login",authController.loginWithEmail_Pass);
 authRouter.post("/change_pass_otp",authController.changePassWithOtp);
-authRouter.post("/change_pass",jwtVerifyMiddleware,authController.changePass);
+authRouter.patch("/change_pass",jwtVerifyMiddleware,authController.changePass);
 
 
 export default authRouter;

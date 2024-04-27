@@ -330,19 +330,19 @@ const changePass = async (req, res) => {
     const { user } = req;
     const { oldPass, newPass } = req.body;
     const userExisted = await UserModel.findOne({ _id: user.id });
-    let isMatch;
-    bcrypt.compare(password, userExisted.password, (err, result) => {
+    console.log(oldPass, newPass, userExisted.password);
+
+    bcrypt.compare(oldPass, userExisted.password, async (err, result) => {
       if (err) {
-        isMatch = false;
+        return res.status(400).json({ message: "Password not match" });
       }
-      return (isMatch = result);
+      if(!result){
+        return res.status(400).json({ message: "Password not match" });
+      }
+      userExisted.password = await bcrypt.hash(newPass, 10);
+      await userExisted.save();
+      res.status(200).json({ message: "update success", data: userExisted });
     });
-    if (!isMatch) {
-      return res.status(400).json({ message: "Password not match" });
-    }
-    userExisted.password = await bcrypt.hash(newPass, 10);
-    await userExisted.save();
-    res.status(200).json({ message: "update success", data: userExisted });
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "error" });
