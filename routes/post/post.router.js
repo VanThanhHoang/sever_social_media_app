@@ -12,6 +12,8 @@ postRouter.put("/reaction/:id",jwtVerifyMiddleware,postController.postReaction);
 postRouter.post("/repost/:id",jwtVerifyMiddleware,postController.repost);
 postRouter.get("/get_post_public/:id",postController.getDetailPost);
 postRouter.get("/get_comment/:id",postController.getCommentByPostId);
+postRouter.get("/getMyPost",jwtVerifyMiddleware,postController.getMyPost);
+
 /// interaction
 postRouter.post("/comment/:id",jwtVerifyMiddleware,postController.comment);
 postRouter.delete("/delete_comment/:id",jwtVerifyMiddleware,postController.deleteComment);

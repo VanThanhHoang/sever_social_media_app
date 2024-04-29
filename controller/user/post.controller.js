@@ -72,17 +72,106 @@ const upDatePost = async (req, res) => {
     res.status(400).json({ message: "update post failed, bad request" });
   }
 };
-
-const getAllPost = async (req, res) => {
+const getMyPost = async (req, res) => {
   try {
-    console.log(req.user);
+    const {isRepost} = req.query;
     const { id } = req.user;
     console.log(id);
     const page = parseInt(req.query.page) || 1;
     const pageSize = 10; // Số lượng bài viết trên mỗi trang
-
     // Tính toán chỉ số skip
     const skip = (page - 1) * pageSize;
+    const {myPost,myRepost} = req.query;
+    // Lấy số lượng bài viết dựa trên skip và pageSize
+    let posts = await PostModel.find({ status: 0 ,author:id,isRepost:!!isRepost})
+      .populate({
+        path: "author",
+        select: "userName fullName avatar",
+        model: "VNPIC.User",
+      })
+      .populate({
+        path: "reposter",
+        select: "userName fullName avatar",
+        model: "VNPIC.User",
+      })
+      .skip(skip)
+      .limit(pageSize)
+      .lean()
+      .sort({ createdAt: -1 });
+
+    // Đếm tổng số bài viết
+    const totalPosts = await PostModel.countDocuments({ status: 0 });
+
+    // Tính toán các chỉ số của trang trước và trang tiếp theo
+    const nextPage = page < Math.ceil(totalPosts / pageSize) ? page + 1 : null;
+    const prevPage = page > 1 ? page - 1 : null;
+    // Lấy các ID bài viết
+    const postIds = posts.map((post) => {
+      if(post.isRepost) {
+        return post.rootPostId;
+      }
+      return post._id;
+    });
+
+    // Lấy các phương tiện của bài viết
+    const postMedia = await PostMediaModel.find({ post_id: { $in: postIds } });
+    const reactions = await ReactionModel.find({
+      post_id: { $in: postIds },
+    }).populate({
+      path: "user_id",
+      select: "userName fullName avatar",
+      model: "VNPIC.User",
+    });
+    // Thêm phương tiện và các trường khác vào mỗi bài viết
+    await Promise.all(posts.map(async (post) => {
+      if(!post.author) {
+        post.author = {
+          _id: "1",
+          userName: 'HiddenUser',
+          fullName: "Người Dùng Bị Ẩn",
+          avatar: 'https://i.pinimg.com/736x/0d/64/98/0d64989794b1a4c9d89bff571d3d5842.jpg'
+        }
+      }
+      post.media = postMedia.filter((media) => {
+        if(post.isRepost) {
+          return media.post_id.equals(post.rootPostId);
+        }
+        return media.post_id.equals(post._id);
+      });
+      const userReaction = reactions.filter((reaction) =>
+        reaction.post_id.equals(post._id)
+      );
+      post.comments = await getCommentByPostId(post._id);
+      post.reactions = userReaction.map((reaction) => reaction.user_id);
+      post.isMine = post.author._id == id;
+      post.isLiked = userReaction.some((reaction) =>
+        reaction.user_id._id.equals(id)
+      );
+    }));
+    
+
+    // Tạo object chứa dữ liệu cần trả về
+    const responseData = {
+      posts: posts,
+      nextPage: nextPage,
+      prevPage: prevPage,
+    };
+
+    res.status(200).json(responseData);
+  } catch (error) {
+    console.error("Error occurred while fetching posts:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+const getAllPost = async (req, res) => {
+  try {
+    const { id } = req.user;
+    console.log(id);
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = 10; // Số lượng bài viết trên mỗi trang
+    // Tính toán chỉ số skip
+    const skip = (page - 1) * pageSize;
+    const {myPost,myRepost} = req.query;
     // Lấy số lượng bài viết dựa trên skip và pageSize
     let posts = await PostModel.find({ status: 0 })
       .populate({
@@ -107,7 +196,13 @@ const getAllPost = async (req, res) => {
     const nextPage = page < Math.ceil(totalPosts / pageSize) ? page + 1 : null;
     const prevPage = page > 1 ? page - 1 : null;
     // Lấy các ID bài viết
-    const postIds = posts.map((post) => post._id);
+    const postIds = posts.map((post) => {
+      if(post.isRepost) {
+        return post.rootPostId;
+      }
+      return post._id;
+    });
+
     // Lấy các phương tiện của bài viết
     const postMedia = await PostMediaModel.find({ post_id: { $in: postIds } });
     const reactions = await ReactionModel.find({
@@ -127,13 +222,18 @@ const getAllPost = async (req, res) => {
           avatar: 'https://i.pinimg.com/736x/0d/64/98/0d64989794b1a4c9d89bff571d3d5842.jpg'
         }
       }
-      post.media = postMedia.filter((media) => media.post_id.equals(post._id));
+      post.media = postMedia.filter((media) => {
+        if(post.isRepost) {
+          return media.post_id.equals(post.rootPostId);
+        }
+        return media.post_id.equals(post._id);
+      });
       const userReaction = reactions.filter((reaction) =>
         reaction.post_id.equals(post._id)
       );
       post.comments = await getCommentByPostId(post._id);
       post.reactions = userReaction.map((reaction) => reaction.user_id);
-      post.isMine = post.author._id === id;
+      post.isMine = post.author._id == id;
       post.isLiked = userReaction.some((reaction) =>
         reaction.user_id._id.equals(id)
       );
@@ -235,11 +335,13 @@ const repost = async (req, res) => {
   const { id: user_id } = req.user;
   const post = await PostModel.findById(id);
   const repost = new PostModel({
+    rootPostId: id,
     isRepost: true,
     reposter: user_id,
     body: post.body,
     author: post.author,
     privacy: post.privacy,
+    media: post.media,
   });
   await repost.save();
   res.status(200).json({ message: "repost success", data: repost });
@@ -307,4 +409,5 @@ export const postController = {
   repost,
   getCommentByPostId,
   deleteComment,
+  getMyPost
 };

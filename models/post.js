@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 const { Schema } = mongoose;
 const postSchema = new Schema(
   {
+    rootPostId: { type: Schema.Types.ObjectId, ref: "Post" },
     isRepost: { type: Boolean, default: false },
     reposter: { type: Schema.Types.ObjectId, ref: "User" },
     body: String,
