@@ -78,15 +78,13 @@ const getMyPost = async (req, res) => {
     const { id } = req.user;
     console.log(id);
     const page = parseInt(req.query.page) || 1;
-    const pageSize = 10; // Số lượng bài viết trên mỗi trang
+    const pageSize = 1000; // Số lượng bài viết trên mỗi trang
     // Tính toán chỉ số skip
     const skip = (page - 1) * pageSize;
-    const { myPost, myRepost } = req.query;
     // Lấy số lượng bài viết dựa trên skip và pageSize
     let posts = await PostModel.find({
       status: 0,
-      author: id,
-      isRepost: !!isRepost,
+      author: id
     })
       .populate({
         path: "author",
@@ -116,11 +114,13 @@ const getMyPost = async (req, res) => {
       }
       return post._id;
     });
-
+    const postIds2 = posts.map((post) => {
+      return post._id;
+    });
     // Lấy các phương tiện của bài viết
     const postMedia = await PostMediaModel.find({ post_id: { $in: postIds } });
     const reactions = await ReactionModel.find({
-      post_id: { $in: postIds },
+      post_id: { $in: postIds2 },
     }).populate({
       path: "user_id",
       select: "userName fullName avatar",
@@ -162,7 +162,6 @@ const getMyPost = async (req, res) => {
       nextPage: nextPage,
       prevPage: prevPage,
     };
-
     res.status(200).json(responseData);
   } catch (error) {
     console.error("Error occurred while fetching posts:", error);
@@ -208,11 +207,13 @@ const getAllPost = async (req, res) => {
       }
       return post._id;
     });
-
+    const postIds2 = posts.map((post) => {
+      return post._id;
+    });
     // Lấy các phương tiện của bài viết
     const postMedia = await PostMediaModel.find({ post_id: { $in: postIds } });
     const reactions = await ReactionModel.find({
-      post_id: { $in: postIds },
+      post_id: { $in: postIds2  },
     }).populate({
       path: "user_id",
       select: "userName fullName avatar",
@@ -324,7 +325,14 @@ const postReaction = async (req, res) => {
     if (existingReaction) {
       // Nếu đã có phản ứng từ người dùng trước đó, xoá nó
       await ReactionModel.findByIdAndDelete(existingReaction._id);
-      res.status(200).json({ message: "post reaction removed" });
+      const reactions = await ReactionModel.find({
+        post_id: id,
+      }).populate({
+        path: "user_id",
+        select: "userName fullName avatar",
+        model: "VNPIC.User",
+      });
+      res.status(200).json({ message: "post reaction removed" ,reaction: reactions});
     } else {
       // Nếu chưa có phản ứng từ người dùng, thêm mới phản ứng
       const reaction = new ReactionModel({
@@ -332,7 +340,14 @@ const postReaction = async (req, res) => {
         user_id,
       });
       await reaction.save();
-      res.status(200).json({ message: "post reaction success" });
+      const reactions = await ReactionModel.find({
+        post_id: id,
+      }).populate({
+        path: "user_id",
+        select: "userName fullName avatar",
+        model: "VNPIC.User",
+      });
+      res.status(200).json({ message: "post reaction success" ,reaction: reactions});
     }
   } catch (err) {
     console.log(err);

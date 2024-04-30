@@ -32,7 +32,8 @@ const commentSchema = new Schema({
   post_id: { type: Schema.Types.ObjectId, ref: "Post" },
   reply_to: { type: Schema.Types.ObjectId, ref: "Comment" },
   status: { type: Number, enum: [0, 1], default: 0 }, // 0: active, 1: deactive
-});
+},
+{ timestamps: true });
 export const PostModel = mongoose.model("VNPIC.Post", postSchema);
 export const PostMediaModel = mongoose.model(
   "VNPIC.PostMedia",
