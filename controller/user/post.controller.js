@@ -15,7 +15,7 @@ const uploadPost = async (req, res) => {
   });
   await post.save();
   const mediaSaved = await uploadMedia(media, post._id, res);
-  const postSaved = await getDetailPostById(post._id);
+  const postSaved = await getDetailPostById(post._id, id);
   res.status(200).json({
     message: "upload post success",
     data: {
@@ -74,16 +74,20 @@ const upDatePost = async (req, res) => {
 };
 const getMyPost = async (req, res) => {
   try {
-    const {isRepost} = req.query;
+    const { isRepost } = req.query;
     const { id } = req.user;
     console.log(id);
     const page = parseInt(req.query.page) || 1;
     const pageSize = 10; // Số lượng bài viết trên mỗi trang
     // Tính toán chỉ số skip
     const skip = (page - 1) * pageSize;
-    const {myPost,myRepost} = req.query;
+    const { myPost, myRepost } = req.query;
     // Lấy số lượng bài viết dựa trên skip và pageSize
-    let posts = await PostModel.find({ status: 0 ,author:id,isRepost:!!isRepost})
+    let posts = await PostModel.find({
+      status: 0,
+      author: id,
+      isRepost: !!isRepost,
+    })
       .populate({
         path: "author",
         select: "userName fullName avatar",
@@ -107,7 +111,7 @@ const getMyPost = async (req, res) => {
     const prevPage = page > 1 ? page - 1 : null;
     // Lấy các ID bài viết
     const postIds = posts.map((post) => {
-      if(post.isRepost) {
+      if (post.isRepost) {
         return post.rootPostId;
       }
       return post._id;
@@ -123,32 +127,34 @@ const getMyPost = async (req, res) => {
       model: "VNPIC.User",
     });
     // Thêm phương tiện và các trường khác vào mỗi bài viết
-    await Promise.all(posts.map(async (post) => {
-      if(!post.author) {
-        post.author = {
-          _id: "1",
-          userName: 'HiddenUser',
-          fullName: "Người Dùng Bị Ẩn",
-          avatar: 'https://i.pinimg.com/736x/0d/64/98/0d64989794b1a4c9d89bff571d3d5842.jpg'
+    await Promise.all(
+      posts.map(async (post) => {
+        if (!post.author) {
+          post.author = {
+            _id: "1",
+            userName: "HiddenUser",
+            fullName: "Người Dùng Bị Ẩn",
+            avatar:
+              "https://i.pinimg.com/736x/0d/64/98/0d64989794b1a4c9d89bff571d3d5842.jpg",
+          };
         }
-      }
-      post.media = postMedia.filter((media) => {
-        if(post.isRepost) {
-          return media.post_id.equals(post.rootPostId);
-        }
-        return media.post_id.equals(post._id);
-      });
-      const userReaction = reactions.filter((reaction) =>
-        reaction.post_id.equals(post._id)
-      );
-      post.comments = await getCommentByPostId(post._id);
-      post.reactions = userReaction.map((reaction) => reaction.user_id);
-      post.isMine = post.author._id == id;
-      post.isLiked = userReaction.some((reaction) =>
-        reaction.user_id._id.equals(id)
-      );
-    }));
-    
+        post.media = postMedia.filter((media) => {
+          if (post.isRepost) {
+            return media.post_id.equals(post.rootPostId);
+          }
+          return media.post_id.equals(post._id);
+        });
+        const userReaction = reactions.filter((reaction) =>
+          reaction.post_id.equals(post._id)
+        );
+        post.comments = await getCommentByPostId(post._id);
+        post.reactions = userReaction.map((reaction) => reaction.user_id);
+        post.isMine = post.author._id == id;
+        post.isLiked = userReaction.some((reaction) =>
+          reaction.user_id._id.equals(id)
+        );
+      })
+    );
 
     // Tạo object chứa dữ liệu cần trả về
     const responseData = {
@@ -171,7 +177,7 @@ const getAllPost = async (req, res) => {
     const pageSize = 10; // Số lượng bài viết trên mỗi trang
     // Tính toán chỉ số skip
     const skip = (page - 1) * pageSize;
-    const {myPost,myRepost} = req.query;
+    const { myPost, myRepost } = req.query;
     // Lấy số lượng bài viết dựa trên skip và pageSize
     let posts = await PostModel.find({ status: 0 })
       .populate({
@@ -197,7 +203,7 @@ const getAllPost = async (req, res) => {
     const prevPage = page > 1 ? page - 1 : null;
     // Lấy các ID bài viết
     const postIds = posts.map((post) => {
-      if(post.isRepost) {
+      if (post.isRepost) {
         return post.rootPostId;
       }
       return post._id;
@@ -213,32 +219,34 @@ const getAllPost = async (req, res) => {
       model: "VNPIC.User",
     });
     // Thêm phương tiện và các trường khác vào mỗi bài viết
-    await Promise.all(posts.map(async (post) => {
-      if(!post.author) {
-        post.author = {
-          _id: "1",
-          userName: 'HiddenUser',
-          fullName: "Người Dùng Bị Ẩn",
-          avatar: 'https://i.pinimg.com/736x/0d/64/98/0d64989794b1a4c9d89bff571d3d5842.jpg'
+    await Promise.all(
+      posts.map(async (post) => {
+        if (!post.author) {
+          post.author = {
+            _id: "1",
+            userName: "HiddenUser",
+            fullName: "Người Dùng Bị Ẩn",
+            avatar:
+              "https://i.pinimg.com/736x/0d/64/98/0d64989794b1a4c9d89bff571d3d5842.jpg",
+          };
         }
-      }
-      post.media = postMedia.filter((media) => {
-        if(post.isRepost) {
-          return media.post_id.equals(post.rootPostId);
-        }
-        return media.post_id.equals(post._id);
-      });
-      const userReaction = reactions.filter((reaction) =>
-        reaction.post_id.equals(post._id)
-      );
-      post.comments = await getCommentByPostId(post._id);
-      post.reactions = userReaction.map((reaction) => reaction.user_id);
-      post.isMine = post.author._id == id;
-      post.isLiked = userReaction.some((reaction) =>
-        reaction.user_id._id.equals(id)
-      );
-    }));
-    
+        post.media = postMedia.filter((media) => {
+          if (post.isRepost) {
+            return media.post_id.equals(post.rootPostId);
+          }
+          return media.post_id.equals(post._id);
+        });
+        const userReaction = reactions.filter((reaction) =>
+          reaction.post_id.equals(post._id)
+        );
+        post.comments = await getCommentByPostId(post._id, id);
+        post.reactions = userReaction.map((reaction) => reaction.user_id);
+        post.isMine = post.author._id == id;
+        post.isLiked = userReaction.some((reaction) =>
+          reaction.user_id._id.equals(id)
+        );
+      })
+    );
 
     // Tạo object chứa dữ liệu cần trả về
     const responseData = {
@@ -255,15 +263,16 @@ const getAllPost = async (req, res) => {
 };
 const getDetailPost = async (req, res) => {
   try {
+    const { id: userId } = req.user;
     const { id } = req.params;
-    const post = await getDetailPostById(id);
+    const post = await getDetailPostById(id, userId);
     res.status(200).json({ message: "get detail post success", data: post });
   } catch (err) {
     console.log(err);
     res.status(400).json({ message: "get detail post failed, bad request" });
   }
 };
-const getDetailPostById = async (id) => {
+const getDetailPostById = async (id, userId) => {
   const post = await PostModel.findById(id).populate({
     path: "author",
     select: "userName fullName avatar",
@@ -273,8 +282,8 @@ const getDetailPostById = async (id) => {
     path: "user_id",
     select: "userName fullName avatar",
     model: "VNPIC.User",
-  })
-  const comments = await getCommentByPostId(id);
+  });
+  const comments = await getCommentByPostId(id, userId);
   const postMedia = await PostMediaModel.find({ post_id: id });
   return {
     ...post._doc,
@@ -349,13 +358,13 @@ const repost = async (req, res) => {
 const comment = async (req, res) => {
   try {
     const { id } = req.params;
-    const { body,repply_to } = req.body;
+    const { body, repply_to } = req.body;
     const { id: user_id } = req.user;
     const comment = new CommentModel({
       post_id: id,
       create_by: user_id,
       comment: body,
-      reply_to:repply_to ?? null
+      reply_to: repply_to ?? null,
     });
     await comment.save();
     await comment.populate({
@@ -363,40 +372,71 @@ const comment = async (req, res) => {
       select: "userName fullName avatar",
       model: "VNPIC.User",
     });
-    res.status(200).json({ message: "comment success", data: comment });
+    res
+      .status(200)
+      .json({
+        message: "comment success",
+        data: { ...comment._doc, isMine: true },
+      });
   } catch (err) {
     console.log(err);
     res.status(400).json({ message: "comment failed, bad request" });
   }
 };
-const getCommentByPostId = async (id) => {
-  try{
-    const comments = await CommentModel.find({ post_id: id,status:0 ,reply_to:null}).populate({
+const getCommentByPostId = async (id, userId) => {
+  try {
+    const comments = await CommentModel.find({
+      post_id: id,
+      status: 0,
+      reply_to: null,
+    }).populate({
       path: "create_by",
       select: "userName fullName avatar",
       model: "VNPIC.User",
     });
-    const commentWithReplyPromises= comments.map( async (comment) => {
-      const reply = await CommentModel.find({ reply_to: comment._id,status:0 }).populate({
+    const commentWithReplyPromises = comments.map(async (comment) => {
+      const reply = await CommentModel.find({
+        reply_to: comment._id,
+        status: 0,
+      }).populate({
         path: "create_by",
         select: "userName fullName avatar",
         model: "VNPIC.User",
       });
-      return { ...comment._doc, repplies : reply};
+      return {
+        ...comment._doc,
+        repplies: reply,
+        isMine: userId == comment.create_by._id,
+      };
     });
-    const comment= await Promise.all(commentWithReplyPromises);
+    const comment = await Promise.all(commentWithReplyPromises);
     return comment;
-  }catch(err){
+  } catch (err) {
     console.log(err);
     return [];
   }
 };
 const deleteComment = async (req, res) => {
   const { id } = req.params;
-  const comment = await CommentModel.findOneAndUpdate({_id:id}, { status: 1 })
+  const comment = await CommentModel.findOneAndUpdate(
+    { _id: id },
+    { status: 1 }
+  );
   res.status(200).json({ message: "delete comment success", data: comment });
 };
-
+const edit_comment = async (req, res) => {
+  const { id } = req.params;
+  const { body } = req.body;
+  const comment = await CommentModel.findByIdAndUpdate(id, {
+    comment: body,
+  });
+  res
+    .status(200)
+    .json({
+      message: "edit comment success",
+      data: { ...comment._doc, isMine: true },
+    });
+};
 export const postController = {
   uploadPost,
   getAllPost,
@@ -409,5 +449,6 @@ export const postController = {
   repost,
   getCommentByPostId,
   deleteComment,
-  getMyPost
+  getMyPost,
+  edit_comment,
 };

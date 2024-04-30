@@ -17,4 +17,6 @@ postRouter.get("/getMyPost",jwtVerifyMiddleware,postController.getMyPost);
 /// interaction
 postRouter.post("/comment/:id",jwtVerifyMiddleware,postController.comment);
 postRouter.delete("/delete_comment/:id",jwtVerifyMiddleware,postController.deleteComment);
+postRouter.put("/edit_comment/:id",jwtVerifyMiddleware,postController.edit_comment);
+
 export default postRouter;
