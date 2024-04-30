@@ -157,14 +157,13 @@ const getMyPost = async (req, res) => {
     // Tạo object chứa dữ liệu cần trả về
     const responseData = {
       posts: posts.filter((post) => {
-        if(post.reposter){
-            if(post.reposter._id == id){
-              return post;
-            }
-        }else{
+        if (post.reposter) {
+          if (post.reposter._id == id) {
             return post;
+          }
+        } else {
+          return post;
         }
-      
       }),
       nextPage: nextPage,
       prevPage: prevPage,
@@ -220,7 +219,7 @@ const getAllPost = async (req, res) => {
     // Lấy các phương tiện của bài viết
     const postMedia = await PostMediaModel.find({ post_id: { $in: postIds } });
     const reactions = await ReactionModel.find({
-      post_id: { $in: postIds2  },
+      post_id: { $in: postIds2 },
     }).populate({
       path: "user_id",
       select: "userName fullName avatar",
@@ -339,7 +338,9 @@ const postReaction = async (req, res) => {
         select: "userName fullName avatar",
         model: "VNPIC.User",
       });
-      res.status(200).json({ message: "post reaction removed" ,reaction: reactions});
+      res
+        .status(200)
+        .json({ message: "post reaction removed", reaction: reactions });
     } else {
       // Nếu chưa có phản ứng từ người dùng, thêm mới phản ứng
       const reaction = new ReactionModel({
@@ -354,7 +355,9 @@ const postReaction = async (req, res) => {
         select: "userName fullName avatar",
         model: "VNPIC.User",
       });
-      res.status(200).json({ message: "post reaction success" ,reaction: reactions});
+      res
+        .status(200)
+        .json({ message: "post reaction success", reaction: reactions });
     }
   } catch (err) {
     console.log(err);
@@ -394,12 +397,10 @@ const comment = async (req, res) => {
       select: "userName fullName avatar",
       model: "VNPIC.User",
     });
-    res
-      .status(200)
-      .json({
-        message: "comment success",
-        data: { ...comment._doc, isMine: true },
-      });
+    res.status(200).json({
+      message: "comment success",
+      data: { ...comment._doc, isMine: true },
+    });
   } catch (err) {
     console.log(err);
     res.status(400).json({ message: "comment failed, bad request" });
@@ -452,13 +453,24 @@ const edit_comment = async (req, res) => {
   const comment = await CommentModel.findByIdAndUpdate(id, {
     comment: body,
   });
-  res
-    .status(200)
-    .json({
-      message: "edit comment success",
-      data: { ...comment._doc, isMine: true },
-    });
+  res.status(200).json({
+    message: "edit comment success",
+    data: { ...comment._doc, isMine: true },
+  });
 };
+const getPostReaction = (req,res)=>{
+  const {id} = req.params;
+  ReactionModel.find({post_id:id}).populate({
+    path: "user_id",
+    select: "userName fullName avatar",
+    model: "VNPIC.User",
+  }).then((reaction)=>{
+    res.status(200).json({message:"get post reaction success",data:reaction});
+  }).catch((err)=>{
+    res.status(400).json({message:"get post reaction failed, bad request"});
+  })
+  res.status(200).json({message:"get post reaction success",data:reaction});
+}
 export const postController = {
   uploadPost,
   getAllPost,

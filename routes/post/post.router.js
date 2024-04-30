@@ -13,6 +13,7 @@ postRouter.post("/repost/:id",jwtVerifyMiddleware,postController.repost);
 postRouter.get("/get_post_public/:id",postController.getDetailPost);
 postRouter.get("/get_comment/:id",postController.getCommentByPostId);
 postRouter.get("/getMyPost",jwtVerifyMiddleware,postController.getMyPost);
+postRouter.get("/getReaction/:id",jwtVerifyMiddleware,postController.postReaction);
 
 /// interaction
 postRouter.post("/comment/:id",jwtVerifyMiddleware,postController.comment);
