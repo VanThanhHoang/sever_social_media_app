@@ -74,9 +74,7 @@ const upDatePost = async (req, res) => {
 };
 const getMyPost = async (req, res) => {
   try {
-    const { isRepost } = req.query;
     const { id } = req.user;
-    console.log(id);
     const page = parseInt(req.query.page) || 1;
     const pageSize = 1000; // Số lượng bài viết trên mỗi trang
     // Tính toán chỉ số skip
@@ -84,7 +82,7 @@ const getMyPost = async (req, res) => {
     // Lấy số lượng bài viết dựa trên skip và pageSize
     let posts = await PostModel.find({
       status: 0,
-      author: id
+      author: id,
     })
       .populate({
         path: "author",
@@ -158,7 +156,16 @@ const getMyPost = async (req, res) => {
 
     // Tạo object chứa dữ liệu cần trả về
     const responseData = {
-      posts: posts,
+      posts: posts.filter((post) => {
+        if(post.reposter){
+            if(post.reposter._id == id){
+              return post;
+            }
+        }else{
+            return post;
+        }
+      
+      }),
       nextPage: nextPage,
       prevPage: prevPage,
     };
