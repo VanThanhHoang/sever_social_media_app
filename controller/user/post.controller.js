@@ -4,7 +4,6 @@ import {
   ReactionModel,
   CommentModel,
 } from "../../models/post.js";
-import { UserModel } from "../../models/user.js";
 const uploadPost = async (req, res) => {
   const { id } = req.user;
   const { body, privacy, media } = req.body;
@@ -145,6 +144,13 @@ const getMyPost = async (req, res) => {
         const userReaction = reactions.filter((reaction) =>
           reaction.post_id.equals(post._id)
         );
+        if(post.isRepost){
+          const rootPost = await PostModel.findById(post.rootPostId)
+          if(rootPost.status == 1){
+            post.media =[],
+            post.body = "Bài viết đã bị ẩn"
+          }
+        }
         post.comments = await getCommentByPostId(post._id);
         post.reactions = userReaction.map((reaction) => reaction.user_id);
         post.isMine = post.author._id == id;
@@ -177,7 +183,6 @@ const getMyPost = async (req, res) => {
 const getAllPost = async (req, res) => {
   try {
     const { id } = req.user;
-    console.log(id);
     const page = parseInt(req.query.page) || 1;
     const pageSize = 10; // Số lượng bài viết trên mỗi trang
     // Tính toán chỉ số skip
@@ -246,6 +251,13 @@ const getAllPost = async (req, res) => {
         const userReaction = reactions.filter((reaction) =>
           reaction.post_id.equals(post._id)
         );
+        if(post.isRepost){
+          const rootPost = await PostModel.findById(post.rootPostId)
+          if(rootPost.status == 1){
+            post.media =[],
+            post.body = "Bài viết đã bị ẩn"
+          }
+        }
         post.comments = await getCommentByPostId(post._id, id);
         post.reactions = userReaction.map((reaction) => reaction.user_id);
         post.isMine = post.author._id == id;
@@ -365,20 +377,25 @@ const postReaction = async (req, res) => {
   }
 };
 const repost = async (req, res) => {
-  const { id } = req.params;
-  const { id: user_id } = req.user;
-  const post = await PostModel.findById(id);
-  const repost = new PostModel({
-    rootPostId: id,
-    isRepost: true,
-    reposter: user_id,
-    body: post.body,
-    author: post.author,
-    privacy: post.privacy,
-    media: post.media,
-  });
-  await repost.save();
-  res.status(200).json({ message: "repost success", data: repost });
+  try {
+    const { id } = req.params;
+    const { id: user_id } = req.user;
+    const post = await PostModel.findById(id);
+    const repost = new PostModel({
+      rootPostId: id,
+      isRepost: true,
+      reposter: user_id,
+      body: post.body,
+      author: post.author,
+      privacy: post.privacy,
+      media: post.media,
+    });
+    await repost.save();
+    res.status(200).json({ message: "repost success", data: repost });
+  }catch(err){
+    console.log(err);
+    res.status(400).json({ message: "repost failed, bad request" });
+  }
 };
 const comment = async (req, res) => {
   try {
@@ -406,7 +423,7 @@ const comment = async (req, res) => {
     res.status(400).json({ message: "comment failed, bad request" });
   }
 };
-const getCommentByPostId = async (id, userId) => {
+export const getCommentByPostId = async (id, userId) => {
   try {
     const comments = await CommentModel.find({
       post_id: id,

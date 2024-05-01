@@ -5,8 +5,7 @@ import { makeToken } from "../../helper/jwt_helper.js";
 import dotenv from "dotenv";
 import bcrypt from "bcrypt";
 import nodemailer from "nodemailer";
-import { get } from "mongoose";
-import e from "cors";
+
 dotenv.config();
 const verifyGoogleIdToken = async (req, res) => {
   const { idToken, fcm_token } = req.body;
@@ -31,7 +30,7 @@ const verifyGoogleIdToken = async (req, res) => {
         true
       );
       userExisted.fcm_token = fcm_token;
-      console.log(userExisted);
+      userExisted.save();
       res.status(200).json({
         status: "success",
         data: {
@@ -139,7 +138,6 @@ const logOut = async (req, res) => {
 const registerWithEmail_Pass = async (req, res) => {
   try {
     const { password, email, gender, account_type } = req.body;
-    const user = await UserModel.find({ email: "hoangvanthanhdev3@gmail" });
     if (!password || !email || isNaN(gender) || isNaN(account_type)) {
       return res.status(400).json({ status: "error", error: "Missing field" });
     }
