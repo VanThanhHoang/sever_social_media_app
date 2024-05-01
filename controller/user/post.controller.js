@@ -144,11 +144,10 @@ const getMyPost = async (req, res) => {
         const userReaction = reactions.filter((reaction) =>
           reaction.post_id.equals(post._id)
         );
-        if(post.isRepost){
-          const rootPost = await PostModel.findById(post.rootPostId)
-          if(rootPost.status == 1){
-            post.media =[],
-            post.body = "Bài viết đã bị ẩn"
+        if (post.isRepost) {
+          const rootPost = await PostModel.findById(post.rootPostId);
+          if (rootPost.status == 1) {
+            (post.media = []), (post.body = "Bài viết đã bị ẩn");
           }
         }
         post.comments = await getCommentByPostId(post._id);
@@ -251,11 +250,10 @@ const getAllPost = async (req, res) => {
         const userReaction = reactions.filter((reaction) =>
           reaction.post_id.equals(post._id)
         );
-        if(post.isRepost){
-          const rootPost = await PostModel.findById(post.rootPostId)
-          if(rootPost.status == 1){
-            post.media =[],
-            post.body = "Bài viết đã bị ẩn"
+        if (post.isRepost) {
+          const rootPost = await PostModel.findById(post.rootPostId);
+          if (rootPost.status == 1) {
+            (post.media = []), (post.body = "Bài viết đã bị ẩn");
           }
         }
         post.comments = await getCommentByPostId(post._id, id);
@@ -392,7 +390,7 @@ const repost = async (req, res) => {
     });
     await repost.save();
     res.status(200).json({ message: "repost success", data: repost });
-  }catch(err){
+  } catch (err) {
     console.log(err);
     res.status(400).json({ message: "repost failed, bad request" });
   }
@@ -414,9 +412,10 @@ const comment = async (req, res) => {
       select: "userName fullName avatar",
       model: "VNPIC.User",
     });
+    const postComment = await getCommentByPostId(id, user_id);
     res.status(200).json({
       message: "comment success",
-      data: { ...comment._doc, isMine: true },
+      data: { postComment },
     });
   } catch (err) {
     console.log(err);
@@ -457,37 +456,64 @@ export const getCommentByPostId = async (id, userId) => {
   }
 };
 const deleteComment = async (req, res) => {
-  const { id } = req.params;
-  const comment = await CommentModel.findOneAndUpdate(
-    { _id: id },
-    { status: 1 }
-  );
-  res.status(200).json({ message: "delete comment success", data: comment });
+  try {
+    const { id } = req.params;
+    const { id: user_id } = req.user;
+    const comment = await CommentModel.findOneAndUpdate(
+      { _id: id },
+      { status: 1 }
+    );
+    
+    const postComment = await getCommentByPostId(comment.post_id, user_id);
+    res.status(200).json({
+      message: "comment success",
+      data: { postComment },
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({ message: "delete comment failed, bad request" });
+  }
 };
 const edit_comment = async (req, res) => {
-  const { id } = req.params;
-  const { body } = req.body;
-  const comment = await CommentModel.findByIdAndUpdate(id, {
-    comment: body,
-  });
-  res.status(200).json({
-    message: "edit comment success",
-    data: { ...comment._doc, isMine: true },
-  });
+  try {
+    const { id: user_id } = req.user;
+    const { id } = req.params;
+    const { body } = req.body;
+    const comment = await CommentModel.findByIdAndUpdate(id, {
+      comment: body,
+    });
+    const postComment = await getCommentByPostId(comment.post_id, user_id);
+    res.status(200).json({
+      message: "comment success",
+      data: { postComment },
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({ message: "edit comment failed, bad request" });
+  }
 };
-const getPostReaction = (req,res)=>{
-  const {id} = req.params;
-  ReactionModel.find({post_id:id}).populate({
-    path: "user_id",
-    select: "userName fullName avatar",
-    model: "VNPIC.User",
-  }).then((reaction)=>{
-    res.status(200).json({message:"get post reaction success",data:reaction});
-  }).catch((err)=>{
-    res.status(400).json({message:"get post reaction failed, bad request"});
-  })
-  res.status(200).json({message:"get post reaction success",data:reaction});
-}
+const getPostReaction = (req, res) => {
+  const { id } = req.params;
+  ReactionModel.find({ post_id: id })
+    .populate({
+      path: "user_id",
+      select: "userName fullName avatar",
+      model: "VNPIC.User",
+    })
+    .then((reaction) => {
+      res
+        .status(200)
+        .json({ message: "get post reaction success", data: reaction });
+    })
+    .catch((err) => {
+      res
+        .status(400)
+        .json({ message: "get post reaction failed, bad request" });
+    });
+  res
+    .status(200)
+    .json({ message: "get post reaction success", data: reaction });
+};
 export const postController = {
   uploadPost,
   getAllPost,

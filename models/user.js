@@ -26,6 +26,7 @@ const userSchema = new Schema(
     following_status: { type: Number, enum: [0, 1, 2] },
     account_type: { type: Number, enum: [0, 1],default:1},// can update
     fcm_token: String,
+    isFirstLogin: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

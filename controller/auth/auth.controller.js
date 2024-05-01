@@ -52,6 +52,7 @@ const verifyGoogleIdToken = async (req, res) => {
         following_status: 0,
         account_type: 1,
         fcm_token: fcm_token ?? "",
+        isFirstTimeLogin:false
       });
       await newUser.save();
       const accessToken = makeToken({
@@ -68,7 +69,7 @@ const verifyGoogleIdToken = async (req, res) => {
           ...newUser._doc,
           accessToken,
           refreshToken,
-          isFirstTimeLogin: true,
+          isFirstTimeLogin: false,
         },
       });
     }
@@ -174,7 +175,7 @@ const registerWithEmail_Pass = async (req, res) => {
 */
 const loginWithEmail_Pass = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password,fcm } = req.body;
     if (!email || !password) {
       return res.status(400).json({ status: "error", error: "Missing field" });
     }
@@ -198,10 +199,11 @@ const loginWithEmail_Pass = async (req, res) => {
           { id: user._id, email: user.email },
           true
         );
-        user.password = "";
+        user.fcm_token = fcm;
+        user.save();
         res.status(200).json({
           status: "success",
-          data: { ...user._doc, accessToken, refreshToken },
+          data: { ...user._doc, accessToken, refreshToken,isFirstTimeLogin:true },
         });
       }
     });
