@@ -43,11 +43,5 @@ app.post("login", (req, res) => {
   console.log(req.body);
 });
 app.get("", async (req, res) => {
-  const user = await UserModel.find();
-  const fcm_token = user.map((item) => item.fcm_token);
-  console.log(fcm_token);
-  fcm_token.forEach((item) => {
-    if (item) sendNoti(item, "Tesst", "TestNoti ");
-  });
-  Promise.all(fcm_token);
+  res.send("hello");
 });
