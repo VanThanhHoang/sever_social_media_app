@@ -37,7 +37,7 @@ const verifyGoogleIdToken = async (req, res) => {
           ...userExisted._doc,
           accessToken,
           refreshToken,
-          isFirstTimeLogin: false,
+          isFirstLogin: false,
         },
       });
     } else {
@@ -52,7 +52,7 @@ const verifyGoogleIdToken = async (req, res) => {
         following_status: 0,
         account_type: 1,
         fcm_token: fcm_token ?? "",
-        isFirstTimeLogin:false
+        isFirstLogin: false,
       });
       await newUser.save();
       const accessToken = makeToken({
@@ -69,7 +69,7 @@ const verifyGoogleIdToken = async (req, res) => {
           ...newUser._doc,
           accessToken,
           refreshToken,
-          isFirstTimeLogin: false,
+          isFirstTimeLogin: true,
         },
       });
     }
@@ -175,7 +175,7 @@ const registerWithEmail_Pass = async (req, res) => {
 */
 const loginWithEmail_Pass = async (req, res) => {
   try {
-    const { email, password,fcm } = req.body;
+    const { email, password, fcm } = req.body;
     if (!email || !password) {
       return res.status(400).json({ status: "error", error: "Missing field" });
     }
@@ -200,14 +200,14 @@ const loginWithEmail_Pass = async (req, res) => {
           true
         );
         let isFirstLogin = user.isFirstLogin;
-        if(user.isFirstLogin){
-          user.isFirstLogin = false;  
+        if (user.isFirstLogin) {
+          user.isFirstLogin = false;
         }
         user.fcm_token = fcm;
         user.save();
         res.status(200).json({
           status: "success",
-          data: { ...user._doc, accessToken, refreshToken,isFirstLogin },
+          data: { ...user._doc, accessToken, refreshToken, isFirstLogin },
         });
       }
     });
@@ -340,7 +340,7 @@ const changePass = async (req, res) => {
       if (err) {
         return res.status(400).json({ message: "Password not match" });
       }
-      if(!result){
+      if (!result) {
         return res.status(400).json({ message: "Password not match" });
       }
       userExisted.password = await bcrypt.hash(newPass, 10);
