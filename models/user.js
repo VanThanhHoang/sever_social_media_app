@@ -11,31 +11,38 @@ const userSchema = new Schema(
   {
     email: String,
     password: String,
-    otp:String,
-    otpEx:String,
+    otp: String,
+    otpEx: String,
     userName: String, // can update not duplicate
-    fullName: String,// can update
-    avatar: {type:String,default:'https://i.pinimg.com/236x/4b/f3/2a/4bf32ae5f06735b1d83174e9c90a385b.jpg'}, // can update
+    fullName: String, // can update
+    avatar: {
+      type: String,
+      default:
+        "https://i.pinimg.com/236x/4b/f3/2a/4bf32ae5f06735b1d83174e9c90a385b.jpg",
+    }, // can update
     dob: Date, // can update
-    gender: { type: Number, enum: [0, 1, 2],default:0 }, // can update
-    googleId: String, 
+    gender: { type: Number, enum: [0, 1, 2], default: 0 }, // can update
+    googleId: String,
     bio: String, // can update,
     // link array of string
     links: [{ type: String }],
     role: { type: Number, enum: [0, 1] },
     following_status: { type: Number, enum: [0, 1, 2] },
-    account_type: { type: Number, enum: [0, 1,2],default:1},// can update
+    account_type: { type: Number, enum: [0, 1, 2], default: 1 }, // can update
     fcm_token: String,
     isFirstLogin: { type: Boolean, default: true },
   },
   { timestamps: true }
 );
-const searchHistorySchema = new Schema({
-  user: { type: Schema.Types.ObjectId, ref: "User" },
-  search: String,
-},{
-  timestamps:true
-});
+const searchHistorySchema = new Schema(
+  {
+    user: { type: Schema.Types.ObjectId, ref: "User" },
+    search: String,
+  },
+  {
+    timestamps: true,
+  }
+);
 const followerSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   following: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
@@ -44,14 +51,18 @@ const followingSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   follower: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 });
-const notificationSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  content: String,
-  type: { type: Number, enum: [0, 1, 2] },
-  isRead: Boolean,
-},{
-  timestamps:true
-});
+const notificationSchema = new mongoose.Schema(
+  {
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    content: String,
+    type: { type: Number, enum: [0, 1, 2,3,4] },
+    isRead: Boolean,
+    data: Object,
+  },
+  {
+    timestamps: true,
+  }
+);
 const SearchHistoryModel = mongoose.model(
   "VNPIC.SearchHistory",
   searchHistorySchema
@@ -59,4 +70,5 @@ const SearchHistoryModel = mongoose.model(
 const FollowerModel = mongoose.model("VNPIC.Follower", followerSchema);
 const FollowingModel = mongoose.model("VNPIC.Following", followingSchema);
 const UserModel = mongoose.model("VNPIC.User", userSchema);
-export { FollowerModel, UserModel,SearchHistoryModel,FollowingModel};
+const NotificationModel = mongoose.model("VNPIC.Notification", notificationSchema);
+export { FollowerModel, UserModel, SearchHistoryModel, FollowingModel, NotificationModel};

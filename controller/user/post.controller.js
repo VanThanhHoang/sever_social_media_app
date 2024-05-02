@@ -5,7 +5,13 @@ import {
   ReactionModel,
   CommentModel,
 } from "../../models/post.js";
-import { FollowerModel, FollowingModel } from "../../models/user.js";
+import {
+  FollowerModel,
+  FollowingModel,
+  UserModel,
+  NotificationModel,
+} from "../../models/user.js";
+import sendNoti from "../../service/send_noti.js";
 const uploadPost = async (req, res) => {
   const { id } = req.user;
   const { body, privacy, media } = req.body;
@@ -166,10 +172,9 @@ const getMyPost = async (req, res) => {
           if (post.reposter._id == id) {
             return post;
           }
-        } else if(post.author._id == id) {
+        } else if (post.author._id == id) {
           return post;
         }
-        
       }),
       nextPage: nextPage,
       prevPage: prevPage,
@@ -379,9 +384,36 @@ const postReaction = async (req, res) => {
         select: "userName fullName avatar",
         model: "VNPIC.User",
       });
-      res
-        .status(200)
-        .json({ message: "post reaction success", reaction: reactions });
+      // send noti
+      const post = await PostModel.findById(id);
+      if (post.author._id != user_id) {
+        const noti = new NotificationModel({
+          user: post.author._id,
+          content: `${
+            reaction.user_id.fullName ?? reaction.user_id.userName
+          } đã thích bài viết của bạn`,
+          type: 0,
+          isRead: false,
+          data: {
+            id: id,
+            image: reaction.user_id.avatar,
+          },
+        });
+        await noti.save();
+        const fcm_token = await UserModel.findById(post.author._id);
+        if (fcm_token.fcm_token) {
+          const user = await UserModel.findById(user_id);
+          sendNoti(
+            fcm_token.fcm_token,
+            "Thích",
+            `${user.fullName ?? user.userName} đã thích bài viết của bạn`,
+            reaction.user_id.avatar
+          );
+        }
+        res
+          .status(200)
+          .json({ message: "post reaction success", reaction: reactions });
+      }
     }
   } catch (err) {
     console.log(err);
@@ -403,6 +435,32 @@ const repost = async (req, res) => {
       media: post.media,
     });
     await repost.save();
+    // send noti
+    const user = await UserModel.findById(user_id);
+    if (post.author._id != user_id) {
+      const noti = new NotificationModel({
+        user: post.author._id,
+        content: `${
+          user.fullName ?? user.userName
+        } đã chia sẻ bài viết của bạn`,
+        type: 0,
+        isRead: false,
+        data: {
+          id: repost._id,
+          image: user.avatar,
+        },
+      });
+      await noti.save();
+      const fcm_token = await UserModel.findById(post.author._id);
+      if (fcm_token) {
+        sendNoti(
+          fcm_token.fcm_token,
+          "Chia sẻ",
+          `${user.fullName ?? user.userName} đã chia sẻ bài viết của bạn`,
+          user.avatar
+        );
+      }
+    }
     const postSaved = await getDetailPostById(repost._id, user_id);
     res.status(200).json({ message: "repost success", data: postSaved });
   } catch (err) {
@@ -428,6 +486,32 @@ const comment = async (req, res) => {
       model: "VNPIC.User",
     });
     const postComment = await getCommentByPostId(id, user_id);
+    const post = await PostModel.findById(id);
+    // send noti
+    if (post.author._id != user_id) {
+      const noti = new NotificationModel({
+        user: post.author._id,
+        content: `${
+          comment.create_by.fullName ?? comment.create_by.userName
+        } đã bình luận bài viết của bạn`,
+        type: 0,
+        isRead: false,
+        data: {
+          id: id,
+          image: comment.create_by.avatar,
+        },
+      });
+      await noti.save();
+      const fcm_token = await UserModel.findById(post.author);
+      sendNoti(
+        fcm_token.fcm_token,
+        "Bình luận",
+        `${
+          comment.create_by.fullName ?? comment.create_by.userName
+        } đã bình luận bài viết của bạn`,
+        comment.create_by.avatar
+      );
+    }
     res.status(200).json({
       message: "comment success",
       data: { postComment },

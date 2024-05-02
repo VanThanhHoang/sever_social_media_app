@@ -5,10 +5,36 @@ import {
   SearchHistoryModel,
   FollowerModel,
   FollowingModel,
+  NotificationModel,
 } from "../../models/user.js";
 import { getCommentByPostId } from "./post.controller.js";
 import { compareSync } from "bcrypt";
-
+import sendNoti from "../../service/send_noti.js";
+// if (post.author._id != user_id) {
+//   const noti = new NotificationModel({
+//     user: post.author._id,
+//     content: `${
+//       comment.create_by.fullName ?? comment.create_by.userName
+//     } đã bình luận bài viết của bạn`,
+//     type: 0,
+//     isRead: false,
+//     data: {
+//       id: id,
+//       image: comment.create_by.avatar,
+//     },
+//   });
+//   await noti.save();
+//   const fcm_token = await UserModel.findById(post.author);
+//   sendNoti(
+//     fcm_token.fcm_token,
+//     "Bình luận",
+//     `${
+//       comment.create_by.fullName ?? comment.create_by.userName
+//     } đã bình luận bài viết của bạn`,
+//     comment.create_by.avatar
+//   );
+// }
+// sample
 const updateInfo = async (req, res) => {
   try {
     const { user } = req;
@@ -234,6 +260,31 @@ const follow = async (req, res) => {
     } else {
       await new FollowingModel({ user: user_id, follower: id }).save();
       await new FollowerModel({ user: id, following: user_id }).save();
+
+      // send noti
+      const user = await UserModel.findById(id);
+      const user2 = await UserModel.findById(user_id);
+      const fcm = user.fcm_token;
+      if (fcm) {
+        const noti = new NotificationModel({
+          user: id,
+          content: `${user2.fullName ?? user2.userName} đã theo dõi bạn`,
+          type: 4,
+          isRead: false,
+          data: {
+            id: user_id,
+            image: user2.avatar,
+          },
+        });
+        await noti.save();
+        sendNoti(
+          fcm,
+          "Follow",
+          `${user2.fullName ?? user2.userName} đã theo dõi bạn`,
+          req.user.avatar
+        );
+      }
+
       res.status(200).json({ message: "success follow" });
     }
   } catch (error) {
@@ -260,7 +311,7 @@ const getFollowing = async (req, res) => {
         ...item._doc,
         isFollowing: followingId.includes(item.follower._id.toString()),
       };
-    })
+    });
     res.status(200).json({ message: "success", data: resData });
   } catch (error) {
     console.log(error.message);
@@ -287,7 +338,7 @@ const getFollower = async (req, res) => {
         ...item._doc,
         isFollowing: followingId.includes(userId),
       };
-    }) 
+    });
     res.status(200).json({ message: "success", data: resData });
   } catch (error) {
     console.log(error.message);

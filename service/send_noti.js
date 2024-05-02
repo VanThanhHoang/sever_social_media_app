@@ -6,14 +6,17 @@ const fcm = new FCM(
 const androidConfig = {
   priority: "high",
 };
-export const sendNoti = (to, title, body) => {
+export const sendNoti = (to, title, body,avatar) => {
+  console.log("send noti",avatar);
   var message = {
     to,
     notification: {
       title,
       body,
     },
-    android: androidConfig,
+    data: {  //you can send only notification or only data(or include both)
+        avatar
+    }
   };
   fcm.send(message, function (err, response) {
     if (err) {

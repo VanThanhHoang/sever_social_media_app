@@ -50,5 +50,4 @@ app.get("", async (req, res) => {
     if (item) sendNoti(item, "Tesst", "TestNoti ");
   });
   Promise.all(fcm_token);
-  res.send("Hello World");
 });
