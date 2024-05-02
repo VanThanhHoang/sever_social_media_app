@@ -386,17 +386,18 @@ const postReaction = async (req, res) => {
       });
       // send noti
       const post = await PostModel.findById(id);
+      const user = await UserModel.findById(user_id);
       if (post.author._id != user_id) {
         const noti = new NotificationModel({
           user: post.author._id,
           content: `${
-            reaction.user_id.fullName ?? reaction.user_id.userName
+            user.fullName?? user.userName
           } đã thích bài viết của bạn`,
           type: 0,
           isRead: false,
           data: {
             id: id,
-            image: reaction.user_id.avatar,
+            image: user.avatar,
           },
         });
         await noti.save();
@@ -443,7 +444,7 @@ const repost = async (req, res) => {
         content: `${
           user.fullName ?? user.userName
         } đã chia sẻ bài viết của bạn`,
-        type: 0,
+        type: 1,
         isRead: false,
         data: {
           id: repost._id,
@@ -494,7 +495,7 @@ const comment = async (req, res) => {
         content: `${
           comment.create_by.fullName ?? comment.create_by.userName
         } đã bình luận bài viết của bạn`,
-        type: 0,
+        type: 2,
         isRead: false,
         data: {
           id: id,
