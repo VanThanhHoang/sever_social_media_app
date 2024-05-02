@@ -69,6 +69,22 @@ const updateInfo = async (req, res) => {
     res.status(400).json({ message: "error" });
   }
 };
+const getDetailUser2 = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await UserModel.findOne({ _id: id });
+    if (!user) return res.status(400).json({ message: "user not found" });
+    const myPost = await getMyPost(id);
+    res.status(200).json({
+      message: "success",
+      data: user,
+      myPost,
+    });
+  } catch (error) {
+    console.log(error.message);
+    res.status(400).json({ message: "error" });
+  }
+};
 const getDetailUser = async (req, res) => {
   try {
     const { id } = req.params;
@@ -302,11 +318,13 @@ const getFollowing = async (req, res) => {
       select: "userName fullName avatar",
       model: "VNPIC.User",
     });
+    const followingId = following.map((item) => item.follower._id.toString());
     // check is following
     const { id: userId } = req.user;
-    const followingId = following.map((item) => item.follower._id.toString());
     console.log(followingId);
     const resData = following.map((item) => {
+      console.log(item.follower._id.toString());
+      console.log(followingId.includes(item.follower._id.toString()));
       return {
         ...item._doc,
         isFollowing: followingId.includes(item.follower._id.toString()),
@@ -369,5 +387,6 @@ export const UserController = {
   follow,
   getFollowing,
   getFollower,
-  getNoti
+  getNoti,
+  getDetailUser2
 };

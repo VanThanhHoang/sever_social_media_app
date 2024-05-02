@@ -19,8 +19,8 @@ postRouter.post("/report_post/:id",jwtVerifyMiddleware,postController.reportPost
 postRouter.post("/comment/:id",jwtVerifyMiddleware,postController.comment);
 postRouter.delete("/delete_comment/:id",jwtVerifyMiddleware,postController.deleteComment);
 postRouter.put("/edit_comment/:id",jwtVerifyMiddleware,postController.edit_comment);
-postRouter.get("/getAllReport",jwtVerifyMiddleware,postController.getAllReport);
-postRouter.put("/resolveReport/:id",jwtVerifyMiddleware,postController.resolveReport);
+postRouter.get("/getAllReport",postController.getAllReport);
+postRouter.put("/resolveReport/:id",postController.resolveReport);
 
 
 
