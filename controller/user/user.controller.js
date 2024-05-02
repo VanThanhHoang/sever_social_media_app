@@ -322,21 +322,21 @@ const getFollower = async (req, res) => {
   try {
     const { id } = req.params;
     const { id: userId } = req.user;
-
-    console.log(userId);
     const follower = await FollowerModel.find({ user: id }).populate({
       path: "following",
       select: "userName fullName avatar",
       model: "VNPIC.User",
     });
+
     // check is following
     const following = await FollowingModel.find({ user: id });
+    console.log(following);
     const followingId = following.map((item) => item.follower._id.toString());
+    console.log(followingId);
     const resData = follower.map((item) => {
-      console.log(followingId.includes(userId));
       return {
         ...item._doc,
-        isFollowing: followingId.includes(userId),
+        isFollowing: followingId.includes(item.following._id.toString()),
       };
     });
     res.status(200).json({ message: "success", data: resData });
