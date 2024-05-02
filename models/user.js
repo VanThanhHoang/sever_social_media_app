@@ -1,7 +1,7 @@
 /*
     role enum // 0 admin, 1  user 2 block
     following_status enum // 0 notFollowing, 1 following, 2 requeted
-    account_type enum // 0 private, 1 public
+    account_type enum // 0 private, 1 public, 2 block
     gender enum // 0 male 1 falme 2 other
 */
 // body when send request to update user info

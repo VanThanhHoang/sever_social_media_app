@@ -16,6 +16,6 @@ userRouter.get("/public/:id",UserController.getDetailUser2)
 
 userRouter.get("/follower/:id",jwtVerifyMiddleware,UserController.getFollower)
 userRouter.get("/noti/:id",jwtVerifyMiddleware,UserController.getNoti)
-
+userRouter.patch("/blockUser/:id",UserController.blockUser)
 
 export default userRouter;

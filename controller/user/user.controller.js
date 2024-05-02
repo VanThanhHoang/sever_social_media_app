@@ -376,6 +376,18 @@ const getNoti = async (req, res) => {
       res.status(400).json({ message: "error" });
    }
 }
+const blockUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await UserModel.findByIdAndUpdate(id, {
+      account_type: 2,
+    });
+    res.status(200).json({ message: "success", data: user });
+  }catch(error){
+    console.log(error.message);
+    res.status(400).json({ message: "error" });
+  }
+}
 export const UserController = {
   updateInfo,
   getDetailUser,
@@ -388,5 +400,6 @@ export const UserController = {
   getFollowing,
   getFollower,
   getNoti,
-  getDetailUser2
+  getDetailUser2,
+  blockUser
 };
