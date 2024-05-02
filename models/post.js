@@ -39,5 +39,14 @@ export const PostMediaModel = mongoose.model(
   "VNPIC.PostMedia",
   postMediaSchema
 );
+
+const reportSchema = new Schema({
+  post_id: { type: Schema.Types.ObjectId, ref: "Post" },
+  user_id: { type: Schema.Types.ObjectId, ref: "User" },
+  isResolved: { type: Boolean, default: false },
+  status: { type: Number, enum: [0, 1], default: 0 }, 
+},
+{ timestamps: true });  
 export const ReactionModel = mongoose.model("VNPIC.Reaction", reactionSchema);
 export const CommentModel = mongoose.model("VNPIC.Comment", commentSchema);
+export const ReportModel = mongoose.model("VNPIC.Report", reportSchema);

@@ -193,8 +193,24 @@ const getAllPost = async (req, res) => {
     // Tính toán chỉ số skip
     const skip = (page - 1) * pageSize;
     const { myPost, myRepost } = req.query;
+    const { isFollowing } = req.query;
+    console.log("isFollowing",isFollowing); 
+    let following = await FollowingModel.find({ user: id }).populate({
+      path: "follower",
+      select: "userName fullName avatar",
+      model: "VNPIC.User",
+    });
+    let followingId = following
+      .filter((item) => item.follower != null)
+      .map((item) => item.follower._id.toString());
+    let postsQuery = { status: 0 }; // Tạo một object truy vấn cơ bản
+    // Nếu isFollowing được cung cấp và có giá trị là true
+    if (isFollowing) {
+      // Thêm điều kiện vào truy vấn để chỉ lấy các bài viết từ các tác giả có trong danh sách id đã cung cấp
+      postsQuery.author = { $in: followingId, $nin: [id] };
+    }
     // Lấy số lượng bài viết dựa trên skip và pageSize
-    let posts = await PostModel.find({ status: 0 })
+    let posts = await PostModel.find(postsQuery)
       .populate({
         path: "author",
         select: "userName fullName avatar",
@@ -235,12 +251,9 @@ const getAllPost = async (req, res) => {
       select: "userName fullName avatar",
       model: "VNPIC.User",
     });
-    const following = await FollowingModel.find({ user: id }).lean();
-    let followingId = [];
     if (following.length > 0) {
       followingId = following.map((item) => item.follower.toString());
     }
-    console.log(followingId);
     // Thêm phương tiện và các trường khác vào mỗi bài viết
     await Promise.all(
       posts.map(async (post) => {
@@ -268,8 +281,6 @@ const getAllPost = async (req, res) => {
             (post.media = []), (post.body = "Bài viết đã bị ẩn");
           }
         }
-        console.log(post.author._id);
-        console.log(followingId.includes(post.author._id.toString()));
         if (followingId.includes(post.author._id.toString())) {
           post.isFollowing = true;
         } else {
@@ -391,7 +402,7 @@ const postReaction = async (req, res) => {
         const noti = new NotificationModel({
           user: post.author._id,
           content: `${
-            user.fullName?? user.userName
+            user.fullName ?? user.userName
           } đã thích bài viết của bạn`,
           type: 0,
           isRead: false,

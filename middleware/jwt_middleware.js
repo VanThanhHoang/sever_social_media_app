@@ -21,7 +21,7 @@ const jwtVerifyMiddleware = (req, res, next) => {
     req.user = userDataDecoded;
     UserModel.findById(userDataDecoded.id).then((user) => {
       try {
-        if (user.account_type == 3) {
+        if (user.account_type == 2) {
           return res
             .status(STATUS_CODE.UNAUTHORIZED)
             .json({ message: "Account is blocked" });

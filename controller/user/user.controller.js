@@ -307,8 +307,6 @@ const getFollowing = async (req, res) => {
     const followingId = following.map((item) => item.follower._id.toString());
     console.log(followingId);
     const resData = following.map((item) => {
-      console.log(item.follower._id.toString());
-      console.log(followingId.includes(item.follower._id.toString()));
       return {
         ...item._doc,
         isFollowing: followingId.includes(item.follower._id.toString()),
