@@ -4,6 +4,7 @@ import {
   PostMediaModel,
   ReactionModel,
   CommentModel,
+  ReportModel,
 } from "../../models/post.js";
 import {
   FollowerModel,
@@ -194,7 +195,7 @@ const getAllPost = async (req, res) => {
     const skip = (page - 1) * pageSize;
     const { myPost, myRepost } = req.query;
     const { isFollowing } = req.query;
-    console.log("isFollowing",isFollowing); 
+    console.log("isFollowing", isFollowing);
     let following = await FollowingModel.find({ user: id }).populate({
       path: "follower",
       select: "userName fullName avatar",
@@ -625,8 +626,71 @@ const getPostReaction = (req, res) => {
     .status(200)
     .json({ message: "get post reaction success", data: reaction });
 };
-
-const getFollowing = (req, res) => {};
+// schema
+// const reportSchema = new Schema({
+//   post_id: { type: Schema.Types.ObjectId, ref: "Post" },
+//   user_id: { type: Schema.Types.ObjectId, ref: "User" },
+//   isResolved: { type: Boolean, default: false },
+//   status: { type: Number, enum: [0, 1], default: 0 },
+// },
+// { timestamps: true });
+const reportPost = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { id: user_id } = req.user;
+    const report = new ReportModel({
+      post_id: id,
+      user_id,
+    }).save();
+    res.status(200).json({ message: "report post success", data: report });
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({ message: "report post failed, bad request" });
+  }
+};
+const getAllReport = async (req, res) => {
+  try {
+    const reports = await ReportModel.find({ status: 0 }).populate({
+      path: "user_id",
+      select: "userName fullName avatar",
+      model: "VNPIC.User",
+    });
+    res.status(200).json({ message: "get all report success", data: reports });
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({ message: "get all report failed, bad request" });
+  }
+};
+const resolveReport = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const report = await ReportModel.findByIdAndUpdate(id, {
+      isResolved: true,
+    });
+    // send noti
+    const post = await PostModel.findById(report.post_id);
+    const user = await UserModel.findById(report.user_id);
+    const noti = new NotificationModel({
+      user: user._id,
+      content: `Báo cáo củ bạn đã được xem xét và đã được giải quyết`,
+      type: 1,
+      isRead: false,
+      data: {},
+    });
+    await noti.save();
+    const fcm_token = user.fcm_token;
+    sendNoti(
+      fcm_token,
+      "Báo cáo",
+      "Báo cáo của bạn đã được xem xét và đã được giải quyết",
+      "https://tienganhmoingay.com/static/Vocabulary/images/word_images/resolve.jpg"
+    );
+    res.status(200).json({ message: "resolve report success", data: report });
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({ message: "resolve report failed, bad request" });
+  }
+};
 export const postController = {
   uploadPost,
   getAllPost,
@@ -641,4 +705,7 @@ export const postController = {
   deleteComment,
   getMyPost,
   edit_comment,
+  reportPost,
+  getAllReport,
+  resolveReport,
 };

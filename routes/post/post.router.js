@@ -14,11 +14,14 @@ postRouter.get("/get_post_public/:id",postController.getDetailPost);
 postRouter.get("/get_comment/:id",postController.getCommentByPostId);
 postRouter.get("/getMyPost",jwtVerifyMiddleware,postController.getMyPost);
 postRouter.get("/getReaction/:id",jwtVerifyMiddleware,postController.postReaction);
-
-
+postRouter.post("/report_post/:id",jwtVerifyMiddleware,postController.reportPost);
 /// interaction
 postRouter.post("/comment/:id",jwtVerifyMiddleware,postController.comment);
 postRouter.delete("/delete_comment/:id",jwtVerifyMiddleware,postController.deleteComment);
 postRouter.put("/edit_comment/:id",jwtVerifyMiddleware,postController.edit_comment);
+postRouter.get("/getAllReport",jwtVerifyMiddleware,postController.getAllReport);
+postRouter.put("/resolveReport/:id",jwtVerifyMiddleware,postController.resolveReport);
+
+
 
 export default postRouter;
