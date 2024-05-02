@@ -199,11 +199,15 @@ const loginWithEmail_Pass = async (req, res) => {
           { id: user._id, email: user.email },
           true
         );
+        let isFirstLogin = user.isFirstLogin;
+        if(user.isFirstLogin){
+          user.isFirstLogin = false;  
+        }
         user.fcm_token = fcm;
         user.save();
         res.status(200).json({
           status: "success",
-          data: { ...user._doc, accessToken, refreshToken,isFirstTimeLogin:true },
+          data: { ...user._doc, accessToken, refreshToken,isFirstLogin },
         });
       }
     });
