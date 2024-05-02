@@ -17,6 +17,13 @@ const __dirname = path.dirname(__filename);
 const { SERVER_PORT } = configDotenv();
 const app = express();
 app.use(express.json());
+app.use(function(req, res, next) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  next();
+});
 app.use("/static", express.static(path.join(__dirname, "/public")));
 app.use("/auth", authRouter);
 app.use("/upload", uploadRouter);

@@ -20,13 +20,13 @@ const jwtVerifyMiddleware = (req, res, next) => {
     const userDataDecoded = jwt.verify(accessToken, process.env.JWT_SECRET);
     req.user = userDataDecoded;
     UserModel.findById(userDataDecoded.id).then((user) => {
+        console.log(user.account_type);
       if (user.account_type == 3) {
         return res
           .status(STATUS_CODE.UNAUTHORIZED)
           .json({ message: "Account is blocked" });
       }
     });
-
     next();
   } catch (error) {
     console.log(error);
