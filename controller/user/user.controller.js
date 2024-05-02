@@ -345,6 +345,19 @@ const getFollower = async (req, res) => {
     res.status(400).json({ message: "error" });
   }
 };
+const getNoti = async (req, res) => {
+   try{
+    const { id } = req.params;
+      console.log(id);
+      const allNoti = await NotificationModel.find()
+      console.log(allNoti);
+    const noti = await NotificationModel.find({ user: id }).sort({ createdAt: -1 });
+    res.status(200).json({ message: "success", data: noti });
+   }catch(error){
+      console.log(error.message);
+      res.status(400).json({ message: "error" });
+   }
+}
 export const UserController = {
   updateInfo,
   getDetailUser,
@@ -356,4 +369,5 @@ export const UserController = {
   follow,
   getFollowing,
   getFollower,
+  getNoti
 };

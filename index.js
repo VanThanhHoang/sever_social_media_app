@@ -10,7 +10,7 @@ import postRouter from "./routes/post/post.router.js";
 import webRouter from "./routes/web/web.router.js";
 import path from "path";
 import { fileURLToPath } from "url";
-import { UserModel } from "./models/user.js";
+import { NotificationModel, UserModel } from "./models/user.js";
 import sendNoti from "./service/send_noti.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -44,4 +44,5 @@ app.post("login", (req, res) => {
 });
 app.get("", async (req, res) => {
   res.send("hello");
+
 });

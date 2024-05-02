@@ -12,5 +12,9 @@ userRouter.delete("/deleteSearchHistory/:id",jwtVerifyMiddleware,UserController.
 userRouter.delete("/clearSearchHistory",jwtVerifyMiddleware,UserController.clearSearchHistory)  
 userRouter.patch("/follow/:id",jwtVerifyMiddleware,UserController.follow)  
 userRouter.get("/following/:id",jwtVerifyMiddleware,UserController.getFollowing)
+
 userRouter.get("/follower/:id",jwtVerifyMiddleware,UserController.getFollower)
+userRouter.get("/noti/:id",jwtVerifyMiddleware,UserController.getNoti)
+
+
 export default userRouter;
