@@ -77,11 +77,13 @@ const getDetailUser = async (req, res) => {
     const following = await FollowerModel.find({ user: id }).lean();
     let followingId = [];
     if (following.length > 0) {
-      followingId = following.map((item) => item.following.toString());
+      followingId = following.map((item) => {
+        if(item !== null){
+          return item.following.toString();
+        }
+      });
     }
     user.isFollowing = followingId.includes(userId);
-    console.log(followingId);
-    console.log(followingId.includes(userId));
     if (!user) return res.status(400).json({ message: "user not found" });
     const myPost = await getMyPost(id);
     const follower = await FollowerModel.find({ user: id }).populate({
@@ -99,8 +101,8 @@ const getDetailUser = async (req, res) => {
       data: user,
       myPost,
       isFollowing: followingId.includes(userId),
-      follower: follower.map((item) => item.following),
-      following: following2.map((item) => item.follower),
+      follower: follower.filter((item) => item.following != null).map((item) => item.following),
+      following: following2.filter((item) => item.follower != null).map((item) => item.follower),
     });
   } catch (error) {
     console.log(error.message);
