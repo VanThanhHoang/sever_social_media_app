@@ -1,9 +1,11 @@
+import e from "express";
 import {
   PostModel,
   PostMediaModel,
   ReactionModel,
   CommentModel,
 } from "../../models/post.js";
+import { FollowerModel, FollowingModel } from "../../models/user.js";
 const uploadPost = async (req, res) => {
   const { id } = req.user;
   const { body, privacy, media } = req.body;
@@ -81,7 +83,6 @@ const getMyPost = async (req, res) => {
     // Lấy số lượng bài viết dựa trên skip và pageSize
     let posts = await PostModel.find({
       status: 0,
-      author: id,
     })
       .populate({
         path: "author",
@@ -158,7 +159,6 @@ const getMyPost = async (req, res) => {
         );
       })
     );
-
     // Tạo object chứa dữ liệu cần trả về
     const responseData = {
       posts: posts.filter((post) => {
@@ -166,9 +166,10 @@ const getMyPost = async (req, res) => {
           if (post.reposter._id == id) {
             return post;
           }
-        } else {
+        } else if(post.author._id == id) {
           return post;
         }
+        
       }),
       nextPage: nextPage,
       prevPage: prevPage,
@@ -229,6 +230,12 @@ const getAllPost = async (req, res) => {
       select: "userName fullName avatar",
       model: "VNPIC.User",
     });
+    const following = await FollowingModel.find({ user: id }).lean();
+    let followingId = [];
+    if (following.length > 0) {
+      followingId = following.map((item) => item.follower.toString());
+    }
+    console.log(followingId);
     // Thêm phương tiện và các trường khác vào mỗi bài viết
     await Promise.all(
       posts.map(async (post) => {
@@ -255,6 +262,13 @@ const getAllPost = async (req, res) => {
           if (rootPost.status == 1) {
             (post.media = []), (post.body = "Bài viết đã bị ẩn");
           }
+        }
+        console.log(post.author._id);
+        console.log(followingId.includes(post.author._id.toString()));
+        if (followingId.includes(post.author._id.toString())) {
+          post.isFollowing = true;
+        } else {
+          post.isFollowing = false;
         }
         post.comments = await getCommentByPostId(post._id, id);
         post.reactions = userReaction.map((reaction) => reaction.user_id);
@@ -389,7 +403,8 @@ const repost = async (req, res) => {
       media: post.media,
     });
     await repost.save();
-    res.status(200).json({ message: "repost success", data: repost });
+    const postSaved = await getDetailPostById(repost._id, user_id);
+    res.status(200).json({ message: "repost success", data: postSaved });
   } catch (err) {
     console.log(err);
     res.status(400).json({ message: "repost failed, bad request" });
@@ -463,7 +478,7 @@ const deleteComment = async (req, res) => {
       { _id: id },
       { status: 1 }
     );
-    
+
     const postComment = await getCommentByPostId(comment.post_id, user_id);
     res.status(200).json({
       message: "comment success",
@@ -514,6 +529,8 @@ const getPostReaction = (req, res) => {
     .status(200)
     .json({ message: "get post reaction success", data: reaction });
 };
+
+const getFollowing = (req, res) => {};
 export const postController = {
   uploadPost,
   getAllPost,

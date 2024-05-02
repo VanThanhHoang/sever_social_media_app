@@ -37,8 +37,12 @@ const searchHistorySchema = new Schema({
   timestamps:true
 });
 const followerSchema = new mongoose.Schema({
-  folower: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   following: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+});
+const followingSchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  follower: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 });
 const notificationSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
@@ -53,5 +57,6 @@ const SearchHistoryModel = mongoose.model(
   searchHistorySchema
 );
 const FollowerModel = mongoose.model("VNPIC.Follower", followerSchema);
+const FollowingModel = mongoose.model("VNPIC.Following", followingSchema);
 const UserModel = mongoose.model("VNPIC.User", userSchema);
-export { FollowerModel, UserModel,SearchHistoryModel};
+export { FollowerModel, UserModel,SearchHistoryModel,FollowingModel};

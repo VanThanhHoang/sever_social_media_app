@@ -1,5 +1,11 @@
+import e from "express";
 import { PostMediaModel, PostModel, ReactionModel } from "../../models/post.js";
-import { UserModel, SearchHistoryModel } from "../../models/user.js";
+import {
+  UserModel,
+  SearchHistoryModel,
+  FollowerModel,
+  FollowingModel,
+} from "../../models/user.js";
 import { getCommentByPostId } from "./post.controller.js";
 
 const updateInfo = async (req, res) => {
@@ -39,10 +45,38 @@ const updateInfo = async (req, res) => {
 const getDetailUser = async (req, res) => {
   try {
     const { id } = req.params;
+    const { id: userId } = req.user;
     const user = await UserModel.findOne({ _id: id });
+    const following = await FollowerModel.find({ user: id }).lean();
+    let followingId = [];
+    if (following.length > 0) {
+      followingId = following.map((item) => item.following.toString());
+    }
+    user.isFollowing = followingId.includes(userId);
+    console.log(followingId);
+    console.log(followingId.includes(userId));
     if (!user) return res.status(400).json({ message: "user not found" });
     const myPost = await getMyPost(id);
-    res.status(200).json({ message: "success", data: user, myPost});
+    const follower = await FollowerModel.find({ user: id }).populate({
+      path: "following",
+      select: "userName fullName avatar",
+      model: "VNPIC.User",
+    });
+    const following2 = await FollowingModel.find({ user: id }).populate({
+      path: "follower",
+      select: "userName fullName avatar",
+      model: "VNPIC.User",
+    });
+    res
+      .status(200)
+      .json({
+        message: "success",
+        data: user,
+        myPost,
+        isFollowing: followingId.includes(userId),
+        follower:follower.map(item=>item.following),
+        following:following2.map(item=>item.follower),
+      });
   } catch (error) {
     console.log(error.message);
     res.status(400).json({ message: "error" });
@@ -109,11 +143,10 @@ const getMyPost = async (userId) => {
         const userReaction = reactions.filter((reaction) =>
           reaction.post_id.equals(post._id)
         );
-        if(post.isRepost){
-          const rootPost = await PostModel.findById(post.rootPostId)
-          if(rootPost.status == 1){
-            post.media =[],
-            post.body = "Bài viết đã bị ẩn"
+        if (post.isRepost) {
+          const rootPost = await PostModel.findById(post.rootPostId);
+          if (rootPost.status == 1) {
+            (post.media = []), (post.body = "Bài viết đã bị ẩn");
           }
         }
         post.comments = await getCommentByPostId(post._id);
@@ -125,7 +158,7 @@ const getMyPost = async (userId) => {
       })
     );
 
-    return  posts.filter((post) => {
+    return posts.filter((post) => {
       if (post.reposter) {
         if (post.reposter._id == userId) {
           return post;
@@ -133,7 +166,7 @@ const getMyPost = async (userId) => {
       } else {
         return post;
       }
-    })
+    });
   } catch (error) {
     console.error("Error occurred while fetching posts:", error);
   }
@@ -191,13 +224,51 @@ const follow = async (req, res) => {
   try {
     const { id } = req.params;
     const { id: user_id } = req.user;
+    const following = await FollowingModel.findOne({
+      user: user_id,
+      follower: id,
+    });
+    if (following) {
+      await FollowingModel.findOneAndDelete({ user: user_id, follower: id });
+      await FollowerModel.findOneAndDelete({ user: id, following: user_id });
+      res.status(200).json({ message: "success unfollow" });
+    } else {
+      await new FollowingModel({ user: user_id, follower: id }).save();
+      await new FollowerModel({ user: id, following: user_id }).save();
+      res.status(200).json({ message: "success follow" });
+    }
   } catch (error) {
     console.log(error.message);
     res.status(400).json({ message: "error" });
   }
 };
-const sendFollowRequest = (req, res) => {
-  res.status(200).json({ message: "success" });
+const getFollowing = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const following = await FollowingModel.find({ user: id }).populate({
+      path: "follower",
+      select: "userName fullName avatar",
+      model: "VNPIC.User",
+    });
+    res.status(200).json({ message: "success", data: following });
+  } catch (error) {
+    console.log(error.message);
+    res.status(400).json({ message: "error" });
+  }
+};
+const getFollower = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const follower = await FollowerModel.find({ user: id }).populate({
+      path: "following",
+      select: "userName fullName avatar",
+      model: "VNPIC.User",
+    });
+    res.status(200).json({ message: "success", data: follower });
+  } catch (error) {
+    console.log(error.message);
+    res.status(400).json({ message: "error" });
+  }
 };
 export const UserController = {
   updateInfo,
@@ -208,4 +279,6 @@ export const UserController = {
   deleteSearchHistory,
   clearSearchHistory,
   follow,
+  getFollowing,
+  getFollower,
 };
