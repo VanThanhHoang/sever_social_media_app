@@ -7,6 +7,7 @@ import {
   FollowingModel,
 } from "../../models/user.js";
 import { getCommentByPostId } from "./post.controller.js";
+import { compareSync } from "bcrypt";
 
 const updateInfo = async (req, res) => {
   try {
@@ -67,16 +68,14 @@ const getDetailUser = async (req, res) => {
       select: "userName fullName avatar",
       model: "VNPIC.User",
     });
-    res
-      .status(200)
-      .json({
-        message: "success",
-        data: user,
-        myPost,
-        isFollowing: followingId.includes(userId),
-        follower:follower.map(item=>item.following),
-        following:following2.map(item=>item.follower),
-      });
+    res.status(200).json({
+      message: "success",
+      data: user,
+      myPost,
+      isFollowing: followingId.includes(userId),
+      follower: follower.map((item) => item.following),
+      following: following2.map((item) => item.follower),
+    });
   } catch (error) {
     console.log(error.message);
     res.status(400).json({ message: "error" });
@@ -245,12 +244,24 @@ const follow = async (req, res) => {
 const getFollowing = async (req, res) => {
   try {
     const { id } = req.params;
-    const following = await FollowingModel.find({ user: id }).populate({
+    let following = await FollowingModel.find({ user: id }).populate({
       path: "follower",
       select: "userName fullName avatar",
       model: "VNPIC.User",
     });
-    res.status(200).json({ message: "success", data: following });
+    // check is following
+    const { id: userId } = req.user;
+    const followingId = following.map((item) => item.follower._id.toString());
+    console.log(followingId);
+    const resData = following.map((item) => {
+      console.log(item.follower._id.toString());
+      console.log(followingId.includes(item.follower._id.toString()));
+      return {
+        ...item._doc,
+        isFollowing: followingId.includes(item.follower._id.toString()),
+      };
+    })
+    res.status(200).json({ message: "success", data: resData });
   } catch (error) {
     console.log(error.message);
     res.status(400).json({ message: "error" });
@@ -259,12 +270,25 @@ const getFollowing = async (req, res) => {
 const getFollower = async (req, res) => {
   try {
     const { id } = req.params;
+    const { id: userId } = req.user;
+
+    console.log(userId);
     const follower = await FollowerModel.find({ user: id }).populate({
       path: "following",
       select: "userName fullName avatar",
       model: "VNPIC.User",
     });
-    res.status(200).json({ message: "success", data: follower });
+    // check is following
+    const following = await FollowingModel.find({ user: id });
+    const followingId = following.map((item) => item.follower._id.toString());
+    const resData = follower.map((item) => {
+      console.log(followingId.includes(userId));
+      return {
+        ...item._doc,
+        isFollowing: followingId.includes(userId),
+      };
+    }) 
+    res.status(200).json({ message: "success", data: resData });
   } catch (error) {
     console.log(error.message);
     res.status(400).json({ message: "error" });
