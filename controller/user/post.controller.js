@@ -320,6 +320,68 @@ const getDetailPost = async (req, res) => {
     res.status(400).json({ message: "get detail post failed, bad request" });
   }
 };
+const getDetailPost2 = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const post = await getDetailPostById2(id);
+    res.status(200).json({ message: "get detail post success", data: post });
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({ message: "get detail post failed, bad request" });
+  }
+};
+export const getCommentByPostId2 = async (id) => {
+  try {
+    const comments = await CommentModel.find({
+      post_id: id,
+      status: 0,
+      reply_to: null,
+    }).populate({
+      path: "create_by",
+      select: "userName fullName avatar",
+      model: "VNPIC.User",
+    });
+    const commentWithReplyPromises = comments.map(async (comment) => {
+      const reply = await CommentModel.find({
+        reply_to: comment._id,
+        status: 0,
+      }).populate({
+        path: "create_by",
+        select: "userName fullName avatar",
+        model: "VNPIC.User",
+      });
+      return {
+        ...comment._doc,
+        repplies: reply,
+      };
+    });
+    const comment = await Promise.all(commentWithReplyPromises);
+    return comment;
+  } catch (err) {
+    console.log(err);
+    return [];
+  }
+};
+const getDetailPostById2 = async (id) => {
+  const post = await PostModel.findById(id).populate({
+    path: "author",
+    select: "userName fullName avatar",
+    model: "VNPIC.User",
+  });
+  const reactions = await ReactionModel.find({ post_id: id }).populate({
+    path: "user_id",
+    select: "userName fullName avatar",
+    model: "VNPIC.User",
+  });
+  const comments = await getCommentByPostId2(id);
+  const postMedia = await PostMediaModel.find({ post_id: id });
+  return {
+    ...post._doc,
+    media: postMedia,
+    comments,
+    reactions,
+  };
+};
 const getDetailPostById = async (id, userId) => {
   const post = await PostModel.findById(id).populate({
     path: "author",
@@ -708,4 +770,5 @@ export const postController = {
   reportPost,
   getAllReport,
   resolveReport,
+getDetailPost2
 };

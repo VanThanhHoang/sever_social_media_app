@@ -84,8 +84,8 @@
         console.log('close');   
     }
     
-    const base_url = "http://localhost:8000";
-  //  const base_url = "https://sever-social-media-app.onrender.com";
+    //const base_url = "http://localhost:8000";
+    const base_url = "https://sever-social-media-app.onrender.com";
     const authorName = document.getElementById('authorName');
     const content = document.getElementById('content');
     const mediaContainer = document.getElementById('mediaContainer');
@@ -94,7 +94,10 @@
     const id = "<%= id %>";
     
     fetch(`${base_url}/post/get_post_public/${id}`)
-      .then((response) => response.json())
+      .then((response) => {
+     return   response.json()
+        console.log(response);
+      })
       .then((data) => {
         console.log(data.data);
         const postData = data.data;
